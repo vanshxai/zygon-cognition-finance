@@ -1,6 +1,8 @@
 # Zygon Cognition Finance
 
-Drop a bank statement, an invoice list or a spreadsheet. The app shows it as the document it is, marks what is wrong, and asks you when it is not sure. It never guesses between several possible answers.
+A finance assistant you talk to. Attach a bank statement, an invoice list or a spreadsheet, then type what you want done ("match payments to invoices", "what is still unpaid?", "EMI for 12 lakh at 8.5% for 15 years"). Answers appear as cards in the chat, and the file opens as the document it is in a side panel with problems marked. When more than one answer fits, it asks you. It never guesses.
+
+While you type, grey text and a short list suggest commands (Tab completes). While it works, a finance-themed loader (candlesticks and a rupee coin) shows what it is doing.
 
 Everything runs in the browser. Files are read on the user's device and are not sent to any server.
 

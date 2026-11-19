@@ -3,154 +3,224 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
-/* App shell: top bar, left panel (Overview, Ask, your files), main area shows the file as the document it is. */
+/* Chat-first finance assistant. Left: chats and files. Centre: conversation of result cards. Right: the open document. */
 :root{
-  --bg:#f3f6f6; --surface:#ffffff; --ink:#122220; --muted:#5b6e6c; --line:#dde5e4; --side:#eaf0ef;
-  --accent:#0d6b5b; --accent-ink:#ffffff; --accent-soft:#e3f1ee; --out:#a3b3b1;
-  --ask:#8f4d00; --ask-bg:#fff2dc; --bad:#aa2a1f; --bad-bg:#fdeae7; --good:#1b7243; --good-bg:#e4f4ea;
+  --bg:#f3f6f5; --surface:#ffffff; --surface2:#edf2f1; --ink:#112220; --muted:#5a6d6b; --line:#dbe4e2;
+  --accent:#0d6b5b; --accent-ink:#ffffff; --accent-soft:#e0f0ec; --gold:#c9961f; --gold-ink:#4a3300; --out:#a3b3b1;
+  --ask:#8f4d00; --ask-bg:#fff2dc; --bad:#aa2a1f; --bad-bg:#fdeae7; --good:#1b7243; --good-bg:#e4f4ea; --shadow:0 10px 30px -18px rgba(10,40,35,.35);
   --font:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0e1615; --surface:#152221; --ink:#e5efee; --muted:#93a8a6; --line:#273b39; --side:#111d1c;
-  --accent:#4cc2ab; --accent-ink:#04201a; --accent-soft:#16332e; --out:#5f7775;
-  --ask:#f2b45f; --ask-bg:#3a2a0f; --bad:#ff9087; --bad-bg:#3b1b18; --good:#72d49c; --good-bg:#12301f; color-scheme:dark}}
+  --bg:#0d1514; --surface:#142120; --surface2:#1a2b29; --ink:#e5efee; --muted:#93a8a6; --line:#26393a;
+  --accent:#4cc2ab; --accent-ink:#04201a; --accent-soft:#16332e; --gold:#e3b04b; --gold-ink:#3b2a00; --out:#5f7775;
+  --ask:#f2b45f; --ask-bg:#3a2a0f; --bad:#ff9087; --bad-bg:#3b1b18; --good:#72d49c; --good-bg:#12301f; --shadow:0 10px 30px -18px rgba(0,0,0,.7); color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0e1615; --surface:#152221; --ink:#e5efee; --muted:#93a8a6; --line:#273b39; --side:#111d1c;
-  --accent:#4cc2ab; --accent-ink:#04201a; --accent-soft:#16332e; --out:#5f7775;
-  --ask:#f2b45f; --ask-bg:#3a2a0f; --bad:#ff9087; --bad-bg:#3b1b18; --good:#72d49c; --good-bg:#12301f; color-scheme:dark}
+  --bg:#0d1514; --surface:#142120; --surface2:#1a2b29; --ink:#e5efee; --muted:#93a8a6; --line:#26393a;
+  --accent:#4cc2ab; --accent-ink:#04201a; --accent-soft:#16332e; --gold:#e3b04b; --gold-ink:#3b2a00; --out:#5f7775;
+  --ask:#f2b45f; --ask-bg:#3a2a0f; --bad:#ff9087; --bad-bg:#3b1b18; --good:#72d49c; --good-bg:#12301f; --shadow:0 10px 30px -18px rgba(0,0,0,.7); color-scheme:dark}
 *{box-sizing:border-box}
-html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;padding-inline:0}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--surface);z-index:31}
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface);border-bottom:1px solid var(--line);padding:9px max(14px,env(safe-area-inset-right,0px)) 9px max(14px,env(safe-area-inset-left,0px))}
-.logo{font-weight:600;font-size:17px;letter-spacing:-.01em;margin-right:auto;display:flex;align-items:center;gap:10px}
-.logo span{color:var(--accent)}
-.back{border:0;background:none;color:var(--accent);padding:4px 8px 4px 0;font-weight:500}
-.cur{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.seg button{border:0;border-radius:0;background:var(--surface);padding:6px 12px;font-weight:500;color:var(--muted)}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.55;overflow:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--surface);z-index:80}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{display:grid;grid-template-columns:272px minmax(0,1fr);grid-template-rows:minmax(0,1fr);height:100%;padding-top:env(safe-area-inset-top,0px)}
+.app.collapsed{grid-template-columns:0 minmax(0,1fr)}
+/* sidebar */
+.side{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:16px 12px 12px max(12px,env(safe-area-inset-left,0px));overflow:hidden;min-width:0}
+.app.collapsed .side{padding:0;border:0;visibility:hidden}
+.logo{font-weight:600;font-size:18px;letter-spacing:-.01em;padding:2px 8px 14px;line-height:1.2}
+.logo b{color:var(--accent);font-weight:600}
+.newchat{border:1px solid var(--line);background:var(--surface2);border-radius:10px;padding:10px 12px;text-align:left;font-weight:500}
+.newchat:hover{border-color:var(--accent)}
+.sidelabel{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:18px 10px 6px;font-weight:600}
+.list{overflow:auto;display:flex;flex-direction:column;gap:2px;min-height:0}
+.list.grow{flex:1}
+.item{position:relative;display:flex;gap:8px;align-items:center;width:100%;border:0;background:none;text-align:left;padding:8px 26px 8px 10px;border-radius:8px;color:var(--muted);font-size:14px}
+.item:hover{background:var(--surface2);color:var(--ink)}
+.item.on{background:var(--surface2);color:var(--ink);box-shadow:inset 3px 0 0 var(--accent)}
+.item span.t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.item .x{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--muted);opacity:0;font-size:16px;padding:0 4px}
+.item:hover .x{opacity:1}
+.fico{flex:none;width:22px;height:22px;border-radius:5px;display:grid;place-items:center;font-size:11px;font-weight:600;background:var(--accent-soft);color:var(--accent)}
+.sidefoot{font-size:12px;color:var(--muted);padding:10px 8px 2px;border-top:1px solid var(--line);margin-top:8px}
+/* main */
+main{display:flex;flex-direction:column;min-width:0;height:100%}
+.top{display:flex;align-items:center;gap:8px;padding:8px max(14px,env(safe-area-inset-right,0px)) 8px 10px;border-bottom:1px solid var(--line);background:var(--bg)}
+.top h1{font-size:15px;font-weight:600;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}
+.icon{width:38px;height:38px;flex:none;border-radius:10px;border:1px solid transparent;background:none;color:var(--muted);display:grid;place-items:center}
+.icon:hover{background:var(--surface2);color:var(--ink)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.seg button{border:0;border-radius:0;background:var(--surface);padding:6px 11px;font-weight:500;color:var(--muted);font-size:13.5px}
 .seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink)}
-.rate{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
-.rate input{width:76px;padding:5px 8px;font-family:var(--mono)}
-button,select,input{font:inherit;color:inherit}
-button{cursor:pointer;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 13px}
-button:hover{border-color:var(--accent)}
-button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:500}
-button.link{border:0;background:none;padding:2px 0;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
-button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,.drop:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-input[type=text],input[type=number],select{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 11px}
-.shell{display:grid;grid-template-columns:230px minmax(0,1fr);align-items:start}
-.side{position:sticky;top:calc(52px + env(safe-area-inset-top,0px));height:calc(100vh - 52px);overflow-y:auto;background:var(--side);border-right:1px solid var(--line);padding:14px 10px 20px max(10px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:2px}
-.side h4{margin:16px 8px 6px;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600}
-.nav{display:flex;gap:10px;align-items:center;width:100%;text-align:left;border:0;background:none;padding:8px 10px;border-radius:8px;color:var(--ink)}
-.nav:hover{background:var(--accent-soft)}
-.nav[aria-current=page]{background:var(--surface);box-shadow:0 0 0 1px var(--line);font-weight:600}
-.nav .ic{flex:none;width:22px;height:22px;border-radius:5px;display:grid;place-items:center;font-size:11px;font-weight:600;background:var(--accent-soft);color:var(--accent)}
-.nav .tx{min-width:0;display:flex;flex-direction:column}
-.nav .tx b{font-weight:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.nav .tx small{color:var(--muted);font-size:12px;font-weight:400}
-.badge{margin-left:auto;background:var(--ask-bg);color:var(--ask);border-radius:10px;font-size:12px;font-weight:600;padding:0 7px}
-.main{padding:20px max(16px,env(safe-area-inset-right,0px)) 60px 22px;min-width:0}
-h1{font-size:28px;line-height:1.2;margin:10px 0 8px;font-weight:600;letter-spacing:-.02em;text-wrap:balance}
-h2{font-size:12.5px;margin:30px 0 10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-h2:first-child{margin-top:0}
-p{margin:0 0 10px}
+.rate{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--muted);flex:none}
+.rate input{width:66px;padding:5px 7px;font-family:var(--mono);background:var(--surface);border:1px solid var(--line);border-radius:8px}
+.body{flex:1;min-height:0;display:flex}
+.stage{flex:1;min-width:0;overflow-y:auto;padding:18px max(18px,env(safe-area-inset-right,0px)) 18px 18px;scroll-behavior:smooth}
+.col{max-width:780px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+/* welcome */
+.welcome{text-align:center;padding:5vh 0 10px}
+.welcome .brand{font-size:clamp(30px,6vw,46px);font-weight:600;letter-spacing:-.025em;line-height:1.1}
+.welcome .brand b{color:var(--accent)}
+.welcome p{color:var(--muted);margin:12px auto 26px;max-width:520px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;text-align:left;max-width:760px;margin:0 auto}
+.tile{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:13px 15px;display:flex;flex-direction:column;gap:3px}
+.tile:hover{border-color:var(--accent);box-shadow:var(--shadow)}
+.tile b{font-weight:600;font-size:14.5px}.tile span{font-size:13px;color:var(--muted)}
+/* turns */
+.you{align-self:flex-end;max-width:85%;background:var(--accent);color:var(--accent-ink);padding:9px 14px;border-radius:14px 14px 4px 14px;overflow-wrap:anywhere}
+.ai{display:flex;gap:12px;align-items:flex-start;min-width:0}
+.mark{flex:none;width:30px;height:30px;border-radius:9px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:600;font-size:15px;margin-top:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);min-width:0;flex:1;animation:rise .3s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.card h3{margin:0 0 6px;font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.card p{margin:0 0 8px}
+.big{font-size:19px;line-height:1.35;font-weight:600;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance}
 .muted{color:var(--muted)} .small{font-size:14px}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
-.narrow{max-width:720px}
-.drop{display:block;width:100%;border:2px dashed var(--line);border-radius:14px;padding:42px 18px;text-align:center;background:var(--surface);cursor:pointer}
-.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
-.drop b{font-size:18px;font-weight:600;display:block;margin-bottom:4px}
-.samples{display:grid;gap:10px}
-.sample{display:flex;gap:14px;align-items:center;justify-content:space-between;text-align:left;width:100%;padding:14px 16px;border-radius:12px}
-.sample b{display:block;font-weight:600}
-.sample .go{color:var(--accent);font-weight:500;white-space:nowrap}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
-.big{font-size:21px;line-height:1.35;font-weight:600;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance}
-.facts{display:flex;flex-wrap:wrap;gap:6px 24px;margin-top:10px}
-.fact b{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:20px;display:block;line-height:1.2}
+.facts{display:flex;flex-wrap:wrap;gap:6px 24px;margin:10px 0 4px}
+.fact b{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:19px;display:block;line-height:1.2}
 .fact span{font-size:13px;color:var(--muted)}
-.ask{border:1px solid var(--ask);background:var(--ask-bg);border-radius:12px;padding:16px 18px;margin-bottom:12px}
-.ask h3{font-size:16px;margin:0 0 2px;font-weight:600}
-.ask p{color:var(--ask)}
-.opt{display:block;width:100%;text-align:left;margin-top:8px;background:var(--surface);overflow-wrap:anywhere}
-.find{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}
-.find:last-child{border-bottom:0}
-.find>div{min-width:0;overflow-wrap:anywhere;flex:1}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:7px 12px;font-size:14px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:500}
+.link{border:0;background:none;padding:0;color:var(--accent);text-decoration:underline;text-underline-offset:3px;font-size:inherit}
+.q{border:1px solid var(--ask);background:var(--ask-bg);border-radius:12px;padding:13px 15px;margin-top:10px}
+.q h4{margin:0 0 2px;font-size:15px;font-weight:600}
+.q p{color:var(--ask);font-size:14px}
+.opt{display:block;width:100%;text-align:left;margin-top:7px;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:8px 12px;overflow-wrap:anywhere;font-size:14px}
+.opt:hover{border-color:var(--accent)}
+.q select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.find{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
+.find:last-child{border-bottom:0}.find>div{min-width:0;overflow-wrap:anywhere;flex:1;font-size:14.5px}
 .tag{flex:none;font-size:12px;font-weight:600;padding:2px 9px;border-radius:10px;margin-top:2px;white-space:nowrap}
-.tag.bad{background:var(--bad-bg);color:var(--bad)} .tag.warn{background:var(--ask-bg);color:var(--ask)} .tag.good{background:var(--good-bg);color:var(--good)}
+.tag.bad{background:var(--bad-bg);color:var(--bad)}.tag.warn{background:var(--ask-bg);color:var(--ask)}.tag.good{background:var(--good-bg);color:var(--good)}
+.note{border-radius:10px;padding:9px 13px;font-size:14px;margin-top:8px}
+.note.bad{background:var(--bad-bg);color:var(--bad)}.note.warn{background:var(--ask-bg);color:var(--ask)}.note.good{background:var(--good-bg);color:var(--good)}
 .legend{display:flex;gap:16px;font-size:13px;color:var(--muted);margin-bottom:6px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
-svg{display:block;width:100%;height:auto}
-.axis{fill:var(--muted);font-size:11px;font-family:var(--font)}
-.hbar{display:grid;grid-template-columns:minmax(80px,150px) 1fr auto;gap:10px;align-items:center;font-size:14px;margin:8px 0}
-.hbar .t{height:12px;background:var(--accent-soft);border-radius:6px;overflow:hidden}
-.hbar .t i{display:block;height:100%;background:var(--accent);border-radius:6px}
+svg.chart{display:block;width:100%;height:auto}.axis{fill:var(--muted);font-size:11px;font-family:var(--font)}
+.hbar{display:grid;grid-template-columns:minmax(80px,140px) 1fr auto;gap:10px;align-items:center;font-size:14px;margin:7px 0}
+.hbar .t{height:11px;background:var(--accent-soft);border-radius:6px;overflow:hidden}.hbar .t i{display:block;height:100%;background:var(--accent);border-radius:6px}
 .hbar .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.note{border-radius:10px;padding:10px 14px;font-size:14.5px;margin-top:10px}
-.note.bad{background:var(--bad-bg);color:var(--bad)} .note.warn{background:var(--ask-bg);color:var(--ask)} .note.good{background:var(--good-bg);color:var(--good)}
-/* documents */
-.dochead{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end;justify-content:space-between;margin-bottom:12px}
-.dochead h1{margin:0;font-size:22px}
-.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
-.tools{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:14px}
-.tools select{padding:5px 8px;font-size:13.5px}
-.paper{background:var(--surface);border:1px solid var(--line);border-radius:6px;box-shadow:0 1px 0 var(--line),0 10px 24px -18px rgba(0,0,0,.35)}
-.papermeta{display:flex;flex-wrap:wrap;gap:6px 26px;padding:14px 16px;border-bottom:1px solid var(--line);font-size:13.5px}
-.papermeta b{font-family:var(--mono);font-weight:500;font-variant-numeric:tabular-nums}
-.scroll{overflow:auto;max-height:68vh}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin-top:8px}
 table.doc{border-collapse:collapse;width:100%;font-size:13.5px}
-table.doc th{position:sticky;top:0;background:var(--surface);z-index:2;text-align:left;font-size:12px;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:9px 12px;border-bottom:2px solid var(--line);white-space:nowrap}
-table.doc td{padding:7px 12px;border-bottom:1px solid var(--line);vertical-align:top}
-table.doc td.r,table.doc th.r{text-align:right}
-table.doc td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+table.doc th{position:sticky;top:0;background:var(--surface);z-index:2;text-align:left;font-size:12px;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:8px 11px;border-bottom:2px solid var(--line);white-space:nowrap}
+table.doc td{padding:7px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+table.doc td.r,table.doc th.r{text-align:right}table.doc td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
 table.doc tr:nth-child(even) td{background:color-mix(in srgb,var(--bg) 55%,transparent)}
-tr.bad td{background:var(--bad-bg)!important} tr.warn td{background:var(--ask-bg)!important}
+tr.bad td{background:var(--bad-bg)!important}tr.warn td{background:var(--ask-bg)!important}
 tr.flash td,td.flash{outline:2px solid var(--accent);outline-offset:-2px}
-.chip{display:inline-block;font-size:12px;font-weight:600;padding:1px 8px;border-radius:9px;background:var(--good-bg);color:var(--good);max-width:260px;overflow-wrap:anywhere}
-.chip.bad{background:var(--bad-bg);color:var(--bad)} .chip.warn{background:var(--ask-bg);color:var(--ask)} .chip.plain{background:var(--accent-soft);color:var(--muted)}
+.chip{display:inline-block;font-size:12px;font-weight:600;padding:1px 8px;border-radius:9px;background:var(--good-bg);color:var(--good);overflow-wrap:anywhere}
+.chip.bad{background:var(--bad-bg);color:var(--bad)}.chip.warn{background:var(--ask-bg);color:var(--ask)}.chip.plain{background:var(--accent-soft);color:var(--muted)}
 .chip button{all:unset;cursor:pointer;text-decoration:underline}
 table.sheet{border-collapse:collapse;font-size:13.5px;min-width:100%}
-table.sheet th{position:sticky;top:0;background:var(--side);color:var(--muted);font-weight:500;font-size:12px;border:1px solid var(--line);padding:3px 10px;text-align:center;z-index:2}
-table.sheet th.rn{position:sticky;left:0;z-index:3;width:42px;min-width:42px}
-table.sheet td{border:1px solid var(--line);padding:4px 10px;white-space:nowrap;background:var(--surface)}
-table.sheet td.num{text-align:right}
-table.sheet tr.tot td{font-weight:600;background:color-mix(in srgb,var(--bg) 70%,var(--surface))}
+table.sheet th{position:sticky;top:0;background:var(--surface2);color:var(--muted);font-weight:500;font-size:12px;border:1px solid var(--line);padding:3px 10px;text-align:center;z-index:2}
+table.sheet th.rn{position:sticky;left:0;z-index:3;width:40px;min-width:40px}
+table.sheet td{border:1px solid var(--line);padding:4px 10px;white-space:nowrap;background:var(--surface)}table.sheet td.num{text-align:right;font-family:var(--mono)}
+table.sheet tr.tot td{font-weight:600;background:var(--surface2)}
 table.sheet td.err{background:var(--bad-bg)!important;color:var(--bad);box-shadow:inset 0 0 0 2px var(--bad);cursor:help}
-.sheetnote{padding:10px 14px;border-top:1px solid var(--line);font-size:13.5px}
-details{margin-top:12px} summary{cursor:pointer;color:var(--muted);font-size:14px}
-pre{font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:280px;overflow:auto;margin:8px 0 0}
-.thread{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
-.msg{max-width:94%;padding:10px 14px;border-radius:12px;overflow-wrap:anywhere;font-size:15px}
-.msg.me{align-self:flex-end;background:var(--accent);color:var(--accent-ink)}
-.msg.ai{align-self:flex-start;background:var(--surface);border:1px solid var(--line)}
-.msg .src{display:block;margin-top:6px;font-size:12.5px;color:var(--muted)}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
-.chips button{font-size:14px;padding:6px 12px;border-radius:18px}
-form.ask-in{display:flex;gap:8px} form.ask-in input{flex:1;min-width:0}
-[hidden]{display:none!important}
-.dropov{pointer-events:none;position:fixed;inset:0;z-index:60;background:color-mix(in srgb,var(--accent) 18%,transparent);display:grid;place-items:center;font-size:22px;font-weight:600;backdrop-filter:blur(2px)}
-.foot{margin-top:36px;font-size:13px;color:var(--muted)}
-@media (max-width:820px){
-  .shell{grid-template-columns:minmax(0,1fr)}
-  .side{position:static;height:auto;flex-direction:row;overflow-x:auto;overflow-y:hidden;border-right:0;border-bottom:1px solid var(--line);padding:8px max(10px,env(safe-area-inset-left,0px));gap:6px;align-items:center}
-  .side h4{display:none}
-  .nav{width:auto;flex:none;border:1px solid var(--line);background:var(--surface);padding:6px 10px}
-  .nav .tx small{display:none}
-  .main{padding:16px max(14px,env(safe-area-inset-right,0px)) 50px max(14px,env(safe-area-inset-left,0px))}
-  h1{font-size:24px}
+details{margin-top:10px}summary{cursor:pointer;color:var(--muted);font-size:14px}
+pre{font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:260px;overflow:auto;margin:8px 0 0}
+/* finance loader: candlesticks and a spinning rupee coin */
+.loader{display:flex;align-items:flex-end;gap:16px;padding:4px 2px}
+.candles{display:flex;gap:7px;align-items:flex-end;height:56px}
+.candles i{position:relative;width:9px;border-radius:2px;background:var(--good);height:16px;animation:cd 1.3s ease-in-out infinite}
+.candles i.dn{background:var(--bad)}
+.candles i::before{content:"";position:absolute;left:50%;top:-9px;bottom:-9px;width:2px;margin-left:-1px;background:inherit;opacity:.55;z-index:-1}
+.candles i:nth-child(1){animation-delay:0s}.candles i:nth-child(2){animation-delay:.15s}.candles i:nth-child(3){animation-delay:.3s}.candles i:nth-child(4){animation-delay:.45s}.candles i:nth-child(5){animation-delay:.6s}.candles i:nth-child(6){animation-delay:.75s}.candles i:nth-child(7){animation-delay:.9s}.candles i:nth-child(8){animation-delay:1.05s}
+@keyframes cd{0%,100%{height:14px}50%{height:40px}}
+.coin{flex:none;width:36px;height:36px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a8,var(--gold) 60%);color:var(--gold-ink);display:grid;place-items:center;font-weight:700;font-size:17px;box-shadow:inset 0 0 0 3px rgba(0,0,0,.12);animation:flip 1.6s linear infinite}
+@keyframes flip{to{transform:rotateY(360deg)}}
+.lstep{font-size:14px;color:var(--muted);align-self:center}
+.lstep b{color:var(--ink);font-weight:500}
+@media (prefers-reduced-motion:reduce){.candles i,.coin,.card{animation:none}}
+/* composer */
+.composer{padding:8px max(14px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px));background:linear-gradient(transparent,var(--bg) 22%)}
+.cin{max-width:780px;margin:0 auto;position:relative}
+.sugpop{position:absolute;left:0;right:0;bottom:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;z-index:5}
+.sugpop button{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 14px;font-size:14.5px;border-bottom:1px solid var(--line)}
+.sugpop button:last-child{border-bottom:0}.sugpop button:hover,.sugpop button.on{background:var(--accent-soft)}
+.sugpop mark{background:none;color:var(--accent);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.fchip{display:inline-flex;gap:6px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:3px 10px;font-size:13px}
+.box{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:6px 8px 6px 6px;box-shadow:var(--shadow)}
+.box:focus-within{border-color:var(--accent)}
+.field{position:relative;flex:1;min-width:0}
+.field input,.field .ghost{width:100%;font-size:16px;padding:9px 6px;border:0;background:none;outline:0;font-family:var(--font);line-height:1.4}
+.field .ghost{position:absolute;inset:0;pointer-events:none;color:var(--muted);opacity:.65;white-space:pre;overflow:hidden}
+.field .ghost .t{visibility:hidden}
+.field input{position:relative}
+.send{width:40px;height:40px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;flex:none}
+.send:disabled{opacity:.45}
+.hint{max-width:780px;margin:6px auto 0;font-size:12px;color:var(--muted);text-align:center}
+kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-radius:4px;padding:0 5px;background:var(--surface)}
+/* document drawer */
+.drawer{width:min(54vw,720px);flex:none;border-left:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;min-width:0}
+.dhead{display:flex;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+.dhead .tabs{flex:1;display:flex;gap:6px;overflow-x:auto}
+.dtab{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 11px;font-size:13.5px;white-space:nowrap}
+.dtab[aria-selected=true]{background:var(--accent-soft);border-color:var(--accent);font-weight:600}
+.dbody{flex:1;overflow:auto;padding:14px}
+.dtools{display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:13.5px;margin:0 0 10px}
+.dtools select{padding:4px 7px;border:1px solid var(--line);border-radius:7px;background:var(--surface)}
+.papermeta{display:flex;flex-wrap:wrap;gap:4px 22px;padding:10px 2px 12px;font-size:13px;color:var(--muted)}.papermeta b{font-family:var(--mono);font-weight:500;color:var(--ink)}
+.dropov{pointer-events:none;position:fixed;inset:0;z-index:90;background:color-mix(in srgb,var(--accent) 16%,transparent);display:grid;place-items:center;font-size:22px;font-weight:600;backdrop-filter:blur(2px)}
+.scrim{display:none}
+@media (max-width:900px){
+  .drawer{position:fixed;inset:0;width:auto;z-index:70;padding-top:env(safe-area-inset-top,0px)}
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{position:fixed;left:0;top:0;bottom:0;width:284px;z-index:60;transform:translateX(-102%);transition:transform .2s;padding-top:calc(16px + env(safe-area-inset-top,0px))}
+  .app.open .side{transform:none;box-shadow:var(--shadow)}
+  .app.open .scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:55}
+  .app.collapsed{grid-template-columns:minmax(0,1fr)}.app.collapsed .side{visibility:visible;padding:16px 12px}
+  .rate .l{display:none}
 }
-@media (max-width:600px){.top{position:static;gap:6px 10px;padding-top:8px;padding-bottom:8px}.cur>.muted{display:none}.cur{gap:6px}.seg button{padding:5px 9px;font-size:13.5px}.logo{margin-right:0;flex:1 1 auto}}
-@media (max-width:480px){.hbar{grid-template-columns:90px 1fr auto}.rate span.l{display:none}.rate input{width:64px}}
+@media (max-width:560px){.seg button{padding:5px 8px}.top .rate{display:none}.you{max-width:92%}.stage{padding-left:12px}.mark{display:none}}
 </style>
 
-<div class="top" id="top">
-  <div class="logo"><button class="back" id="back" hidden aria-label="Back to home">&#8249; Home</button><div>Zygon <span>Cognition</span> Finance</div></div>
-  <div class="cur" id="curbox"></div>
+<div class="app" id="app">
+  <aside class="side" id="side">
+    <div class="logo">Zygon <b>Cognition</b><br>Finance</div>
+    <button class="newchat" id="newchat">＋ New chat</button>
+    <div class="sidelabel">Recent</div>
+    <div class="list grow" id="chatlist"></div>
+    <div class="sidelabel" id="fileslabel">Files in this chat</div>
+    <div class="list" id="filelist"></div>
+    <div class="sidefoot">Files are read in this browser. Nothing is sent to a server.</div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+  <main>
+    <header class="top">
+      <button class="icon" id="menu" aria-label="Show or hide the chat list"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <h1 id="title">New chat</h1>
+      <span class="seg" role="group" aria-label="Show amounts in"><button data-c="INR" aria-pressed="true">&#8377; Rupees</button><button data-c="USD" aria-pressed="false">$ Dollars</button></span>
+      <label class="rate"><span class="l">1 $ = &#8377;</span><input type="number" id="rate" min="0.01" step="0.01" aria-label="Rupees per dollar"></label>
+      <button class="icon" id="theme" aria-label="Switch light or dark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+    </header>
+    <div class="body">
+      <section class="stage" id="stage" aria-live="polite"></section>
+      <aside class="drawer" id="drawer" hidden></aside>
+    </div>
+    <footer class="composer">
+      <div class="cin">
+        <div class="sugpop" id="pop" hidden></div>
+        <div class="chips" id="fchips"></div>
+        <div class="box">
+          <button class="icon" id="attach" aria-label="Attach a file" title="Attach a bank statement, invoice list or spreadsheet"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5l-8.6 8.6a5.5 5.5 0 01-7.8-7.8l8.6-8.6a3.7 3.7 0 015.2 5.2l-8.6 8.6a1.8 1.8 0 01-2.6-2.6l7.9-7.9"/></svg></button>
+          <input type="file" id="file" multiple accept=".csv,.txt,.xlsx,.xls,.pdf" hidden>
+          <div class="field"><div class="ghost" id="ghost" aria-hidden="true"></div><input id="q" type="text" autocomplete="off" spellcheck="false" aria-label="Type what you want done" placeholder=""></div>
+          <button class="send" id="send" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        </div>
+        <div class="hint"><kbd>Tab</kbd> completes the grey suggestion &middot; <kbd>Enter</kbd> sends</div>
+      </div>
+    </footer>
+  </main>
 </div>
-<div id="root"></div>
 <div class="dropov" id="dropov" hidden>Drop to add your file</div>
-<input type="file" id="file" multiple accept=".csv,.txt,.xlsx,.xls,.pdf" hidden>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -163,14 +233,18 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 function D(n) { const d = new Date(n * 86400000); return d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); }
-const KEY = 'zygon_finance_v3';
+const uid = () => Math.random().toString(36).slice(2, 9);
+const KEY = 'zygon_cognition_finance_chat_v1';
 
-// ---------- state ----------
-let S = { files: [], answers: {}, chat: [], key: null, disp: 'INR', rate: 85, bankOnly: false };
+// ---------- state: many chats, each with its own files, answers and conversation ----------
+let S = { chats: [], cur: null, disp: 'INR', rate: 85, theme: '' };
+let DR = null;            // open document: { fi, only, flash }
+let CUR = 'INR';          // currency of the loaded numbers
 const RAW = {};
-let CUR = 'INR';            // currency the loaded numbers are in (for the analysis)
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } }
-function load() { try { const t = localStorage.getItem(KEY); if (t) S = Object.assign(S, JSON.parse(t)); } catch (e) { } }
+function newChat() { const c = { id: uid(), title: 'New chat', files: [], answers: {}, turns: [], key: null, t: Date.now() }; S.chats.unshift(c); S.cur = c.id; return c; }
+function C() { let c = S.chats.find(x => x.id === S.cur); if (!c) c = newChat(); return c; }
+function save() { try { S.chats = S.chats.slice(0, 25); localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } }
+function load() { try { const t = localStorage.getItem(KEY); if (t) { S = Object.assign(S, JSON.parse(t)); S.chats.forEach(c => c.turns.forEach(t => { t.pending = false; })); } } catch (e) { } if (S.theme) document.documentElement.dataset.theme = S.theme; }
 
 // ---------- money display and conversion ----------
 function conv(p, from) { if (from === S.disp) return p; return from === 'USD' ? Math.round(p * S.rate) : Math.round(p / S.rate); }
@@ -183,24 +257,14 @@ function short(p, cur) {
   if (a >= 1e9) return s + '$' + (a / 1e9).toFixed(1) + 'B'; if (a >= 1e6) return s + '$' + (a / 1e6).toFixed(1) + 'M'; if (a >= 1e3) return s + '$' + (a / 1e3).toFixed(0) + 'k'; return s + '$' + a.toFixed(0);
 }
 function plainNum(p, cur) { const v = conv(p, cur), neg = v < 0, a = Math.abs(v), d = Math.floor(a / 100), f = String(a % 100).padStart(2, '0'); let g = String(d); g = S.disp === 'INR' ? (g.length > 3 ? g.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + g.slice(-3) : g) : g.replace(/\B(?=(\d{3})+(?!\d))/g, ','); return (neg ? '-' : '') + g + '.' + f; }
-function curBox() {
-  const b = $('#curbox');
-  b.innerHTML = `<span class="muted small">Show amounts in</span><span class="seg" role="group" aria-label="Currency"><button data-c="INR" aria-pressed="${S.disp === 'INR'}">₹ Rupees</button><button data-c="USD" aria-pressed="${S.disp === 'USD'}">$ Dollars</button></span>
-  <label class="rate"><span class="l">1 $ =</span><span class="l">₹</span><input type="number" id="rate" min="0.01" step="0.01" value="${S.rate}" aria-label="Rupees per dollar"></label>`;
-  b.querySelectorAll('[data-c]').forEach(x => x.onclick = () => { S.disp = x.dataset.c; save(); render(); });
-  $('#rate').onchange = e => { const v = parseFloat(e.target.value); if (v > 0) { S.rate = v; save(); render(); } else e.target.value = S.rate; };
-}
 
-// ---------- files ----------
+// ---------- reading files ----------
 function fileCur(rows) { let usd = 0, inr = 0; rows.slice(0, 40).forEach(r => r.forEach(c => { const t = String(c); if (/\$|USD/i.test(t)) usd++; if (/₹|Rs\.?|INR/i.test(t)) inr++; })); return usd > inr ? 'USD' : 'INR'; }
-function allBank() { const o = []; S.files.forEach((f, fi) => (f.bank || []).forEach(l => o.push(Object.assign({}, l, { id: 'S' + (fi + 1) + '-' + l.id.slice(1), fi })))); return o; }
-function allItems() { const o = []; S.files.forEach((f, fi) => (f.items || []).forEach(i => o.push(i))); return o; }
-function gridFile() { const i = S.files.findIndex(f => f.grid); return i < 0 ? null : { f: S.files[i], fi: i }; }
 function ingest(name, rows) {
-  let h = 0, kind = 'sheet';
+  const c = C(); let h = 0, kind = 'sheet';
   for (let i = 0; i < Math.min(15, rows.length); i++) { const k = E.detectKind(rows.slice(i)); if (k !== 'sheet') { h = i; kind = k; break; } }
   RAW[name] = rows; const f = { name, n: rows.length, warn: [], cur: fileCur(rows) }; applyKind(f, rows, h, kind);
-  S.files = S.files.filter(x => x.name !== name); S.files.push(f);
+  c.files = c.files.filter(x => x.name !== name); c.files.push(f);
 }
 function applyKind(f, rows, h, kind) {
   f.kind = kind; f.header = h; f.warn = []; delete f.bank; delete f.items; delete f.grid; const r = rows.slice(h);
@@ -209,13 +273,13 @@ function applyKind(f, rows, h, kind) {
   else f.grid = rows.slice(0, 400);
 }
 async function readFile(file) {
-  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  const ext = (file.name.split('.').pop() || '').toLowerCase(); const c = C();
   try {
     if (ext === 'csv' || ext === 'txt') ingest(file.name, E.parseCSV(await file.text()));
     else if (ext === 'xlsx' || ext === 'xls') {
       const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
       ingest(file.name, XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true, defval: '' }));
-      if (wb.SheetNames.length > 1) S.files.find(f => f.name === file.name).warn.push('This workbook has ' + wb.SheetNames.length + ' sheets. I read the first one only.');
+      if (wb.SheetNames.length > 1) c.files.find(f => f.name === file.name).warn.push('This workbook has ' + wb.SheetNames.length + ' sheets. I read the first one only.');
     } else if (ext === 'pdf') await readPDF(file);
     else toast('I cannot read .' + ext + ' files yet. Please use CSV, Excel or PDF.');
   } catch (e) { toast('I could not read ' + file.name + ' (' + e.message + ').'); }
@@ -244,7 +308,7 @@ async function readPDF(file) {
   if (skipped) f.warn.push(skipped + ' dated line(s) were skipped (no amount and balance found).');
   if (unknown) f.warn.push(unknown + ' line(s) were skipped because I could not prove if money went in or out.');
   if (!bank.length) f.warn.push('I found no transactions. This may be a scanned PDF (a picture). Try the bank\'s CSV or Excel download instead.');
-  S.files = S.files.filter(x => x.name !== file.name); S.files.push(f);
+  const c = C(); c.files = c.files.filter(x => x.name !== file.name); c.files.push(f);
 }
 
 // ---------- samples (answers are known, so I can check myself) ----------
@@ -285,40 +349,69 @@ function sampleSheet() {
   g.push(['Total', ...cols]); return g;
 }
 function loadSample(kind) {
-  const d = demoData(); S.answers = {}; S.chat = [];
+  const c = C(), d = demoData(); c.answers = {}; DR = null;
   const B = { name: 'bank_statement_sample.csv', kind: 'bank', bank: d.bank, n: d.bank.length, warn: [], sample: 1, cur: 'INR' };
-  if (kind === 'both') { S.files = [B, { name: 'customer_invoices_sample.csv', kind: 'ledger', items: d.items, n: d.items.length, warn: [], sample: 1, cur: 'INR' }]; S.key = d.key; }
-  else if (kind === 'bank') { S.files = [B]; S.key = d.key; }
-  else { const g = sampleSheet(); S.files = [{ name: 'sales_sheet_sample.xlsx', kind: 'sheet', grid: g, n: g.length, warn: [], sample: 1, cur: 'INR' }]; S.key = null; }
-  save(); nav(kind === 'sheet' ? 'overview' : 'overview');
+  if (kind === 'both') { c.files = [B, { name: 'customer_invoices_sample.csv', kind: 'ledger', items: d.items, n: d.items.length, warn: [], sample: 1, cur: 'INR' }]; c.key = d.key; }
+  else if (kind === 'bank') { c.files = [B]; c.key = d.key; }
+  else { const g = sampleSheet(); c.files = [{ name: 'sales_sheet_sample.xlsx', kind: 'sheet', grid: g, n: g.length, warn: [], sample: 1, cur: 'INR' }]; c.key = null; }
 }
 
 // ---------- analysis ----------
-function counts(rows) { const c = {}; rows.forEach(r => c[r.status] = (c[r.status] || 0) + 1); return c; }
+function counts(rows) { const o = {}; rows.forEach(r => o[r.status] = (o[r.status] || 0) + 1); return o; }
 function analyze() {
-  const bank = allBank(), items = allItems(), g = gridFile(), A = { bank, items, g };
-  const bf = S.files.filter(f => f.bank), lf = S.files.filter(f => f.items);
-  CUR = (bf[0] || lf[0] || (g && g.f) || { cur: 'INR' }).cur || 'INR'; A.cur = CUR;
+  const c = C(), files = c.files;
+  const bank = [], items = [];
+  files.forEach((f, fi) => { (f.bank || []).forEach(l => bank.push(Object.assign({}, l, { id: 'S' + (fi + 1) + '-' + l.id.slice(1), fi }))); (f.items || []).forEach(i => items.push(i)); });
+  const gi = files.findIndex(f => f.grid), A = { bank, items, g: gi < 0 ? null : { f: files[gi], fi: gi }, files };
+  const bf = files.filter(f => f.bank), lf = files.filter(f => f.items);
+  CUR = (bf[0] || lf[0] || (A.g && A.g.f) || { cur: 'INR' }).cur || 'INR'; A.cur = CUR;
   E.setFmt(p => fmtCur(p, CUR));
   A.mixed = bf.length && lf.length && (bf.some(f => f.cur !== CUR) || lf.some(f => f.cur !== CUR));
   if (bank.length && items.length && !A.mixed) {
     const pays = bank.filter(l => l.credit > 0).map(l => ({ id: l.id, date: l.date, desc: l.desc, amount: l.credit }));
-    A.recon = E.reconcile(pays, items, S.answers); A.c = counts(A.recon.rows); A.nPays = pays.length;
+    A.recon = E.reconcile(pays, items, c.answers); A.c = counts(A.recon.rows); A.nPays = pays.length;
     A.byRow = {}; A.recon.rows.forEach(r => A.byRow[r.id] = r);
     A.paidBy = {}; A.recon.rows.forEach(r => r.ids.forEach(id => A.paidBy[id] = r));
     A.unpaid = new Set(A.recon.outstanding.map(i => i.id));
   }
   if (bank.length) { A.audit = E.auditBank(bank); A.auditBy = {}; A.audit.forEach(e => A.auditBy[e.id] = e); }
-  if (g) { A.foot = E.footing(g.f.grid); A.footBy = {}; A.foot.issues.forEach(i => A.footBy[i.r + '-' + i.c] = i); }
+  if (A.g) { A.foot = E.footing(A.g.f.grid); A.footBy = {}; A.foot.issues.forEach(i => A.footBy[i.r + '-' + i.c] = i); }
   return A;
+}
+function colLetter(c) { let s = ''; c++; while (c > 0) { const m = (c - 1) % 26; s = String.fromCharCode(65 + m) + s; c = Math.floor((c - 1) / 26); } return s; }
+function fileOfId(id) { const m = String(id).match(/^S(\d+)-/); return m ? +m[1] - 1 : 0; }
+
+// ---------- findings ----------
+function findings(A) {
+  const f = [];
+  if (A.audit) A.audit.forEach(e => f.push({ ty: 'audit', k: 'bad', t: 'Wrong balance', go: [fileOfId(e.id), e.id], h: `On ${D(e.date)} the statement shows ${M(e.shown)}. It should be ${M(e.expect)}, so it is ${M(Math.abs(e.diff))} too ${e.diff > 0 ? 'high' : 'low'}.` }));
+  if (A.recon) A.recon.rows.forEach(r => {
+    if (r.status === 'DUPLICATE') f.push({ ty: 'dup', k: 'warn', t: 'Paid twice', go: [fileOfId(r.id), r.id], h: `${M(r.amount)} on ${D(r.date)} from ${esc(r.customer || 'unknown')} appears twice. I counted it once, as you said.` });
+    if (r.status === 'SHORT') f.push({ ty: 'short', k: 'warn', t: 'Paid less', go: [fileOfId(r.id), r.id], h: `${esc(r.customer)} paid ${M(Math.abs(r.diff))} less than billed on ${D(r.date)}.` });
+    if (r.status === 'UNMATCHED') f.push({ ty: 'nomatch', k: 'bad', t: 'No invoice', go: [fileOfId(r.id), r.id], h: `${M(r.amount)} from ${esc(r.customer || 'unknown')} on ${D(r.date)} does not match any invoice. It may be an advance, or an invoice is missing.` });
+  });
+  if (A.foot) A.foot.issues.forEach(i => f.push({ ty: 'foot', k: 'bad', t: i.kind === 'footing' ? 'Total is wrong' : 'Row total is wrong', go: [A.g.fi, i.r + '-' + i.c], h: `Cell ${colLetter(i.c)}${i.r + 1} shows ${M(i.shown)}, but the numbers add up to ${M(i.expect)} (${M(Math.abs(i.shown - i.expect))} ${i.shown > i.expect ? 'too high' : 'too low'}).` }));
+  return f;
+}
+function summaryOf(A) {
+  if (A.recon) {
+    const c = A.c, ok = (c.CERTAIN || 0) + (c.CONFIRMED || 0) + (c.SHORT || 0), q = A.recon.questions.length;
+    const head = q ? `I need your help with ${q} thing${q > 1 ? 's' : ''}.` : (c.UNMATCHED || c.DUPLICATE || (A.audit && A.audit.length)) ? 'Mostly matched, with a few things to look at.' : 'Everything matched.';
+    return { head, facts: [[A.nPays, 'payments read'], [ok, 'matched to invoices'], [q, 'need your decision'], [(c.UNMATCHED || 0) + (c.DUPLICATE || 0), 'to look at']], sub: q && c.WAITING ? `${c.WAITING} more payment${c.WAITING > 1 ? 's' : ''} will be checked as soon as you answer.` : '' };
+  }
+  if (A.mixed) return { head: 'Your files use different currencies.', facts: [], sub: 'Set the bank statement and the invoice list to the same currency (use the dropdown in each file) and I will match them. I do not convert between them while matching, because exchange rates change every day.' };
+  if (A.bank.length) { const e = A.audit.length, cr = A.bank.reduce((a, l) => a + l.credit, 0), dr = A.bank.reduce((a, l) => a + l.debit, 0); return { head: e ? `${e} balance${e > 1 ? 's don\'t' : ' doesn\'t'} add up.` : 'Every balance adds up.', facts: [[A.bank.length, 'lines read'], [short(cr), 'money in'], [short(dr), 'money out'], [e, 'wrong balances']], sub: A.items.length ? '' : 'Add your invoice list as well and I will match each payment to the invoices it paid.' }; }
+  if (A.g) { const n = A.foot.issues.length; return { head: n ? `${n} total${n > 1 ? 's don\'t' : ' doesn\'t'} add up.` : A.foot.checked ? 'Every total adds up.' : 'I found no totals to check.', facts: [[A.foot.checked, 'totals checked'], [n, 'wrong']], sub: A.foot.checked ? '' : 'I look for a row starting with "Total" or a column named "Total".' }; }
+  if (A.items.length) return { head: 'I have your invoices.', facts: [[A.items.length, 'invoices and credit notes']], sub: 'Add a bank statement and I will match the payments to them.' };
+  return { head: 'Nothing readable yet.', facts: [], sub: 'Open the file list on the left and check what kind of file I took it for.' };
 }
 
 // ---------- charts ----------
 function monthlyChart(bank) {
   const m = {}; bank.forEach(l => { const d = new Date(l.date * 86400000); const k = d.getUTCFullYear() * 100 + d.getUTCMonth(); (m[k] = m[k] || { i: 0, o: 0 }); m[k].i += l.credit; m[k].o += l.debit; });
-  const keys = Object.keys(m).sort(); if (keys.length < 2) return '';
+  const keys = Object.keys(m).sort(); if (keys.length < 2) return '<p class="muted small">Not enough months to draw a chart.</p>';
   const mx = Math.max(...keys.map(k => Math.max(m[k].i, m[k].o))) || 1, W = 640, H = 220, L = 56, B = 26, T = 8, gw = (W - L - 6) / keys.length, bw = Math.min(22, gw * 0.38);
-  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Money in and out by month"><line x1="${L}" x2="${W}" y1="${H - B}" y2="${H - B}" stroke="var(--line)"/>`;
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Money in and out by month"><line x1="${L}" x2="${W}" y1="${H - B}" y2="${H - B}" stroke="var(--line)"/>`;
   [0, 0.5, 1].forEach(f => { const y = H - B - f * (H - B - T); s += `<line x1="${L}" x2="${W}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-dasharray="${f ? '3 4' : '0'}"/><text class="axis" x="${L - 6}" y="${y + 4}" text-anchor="end">${short(mx * f)}</text>`; });
   keys.forEach((k, i) => {
     const cx = L + gw * i + gw / 2, hi = m[k].i / mx * (H - B - T), ho = m[k].o / mx * (H - B - T);
@@ -327,283 +420,341 @@ function monthlyChart(bank) {
   });
   return `<div class="legend"><span><i style="background:var(--accent)"></i>Money in</span><span><i style="background:var(--out)"></i>Money out</span></div>` + s + '</svg>';
 }
-function unpaidBars(out) {
-  const by = {}; out.forEach(i => by[i.customer] = (by[i.customer] || 0) + i.amount);
+function unpaidBars(list) {
+  const by = {}; list.forEach(i => by[i.customer] = (by[i.customer] || 0) + i.amount);
   const rows = Object.entries(by).filter(r => r[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, 8); if (!rows.length) return '';
   const mx = rows[0][1];
   return rows.map(([n, v]) => `<div class="hbar"><span class="n">${esc(n)}</span><span class="t"><i style="width:${Math.max(3, v / mx * 100)}%"></i></span><span class="num">${short(v)}</span></div>`).join('');
 }
 
-// ---------- plain-language pieces ----------
-function summaryLines(A) {
-  if (A.recon) {
-    const c = A.c, ok = (c.CERTAIN || 0) + (c.CONFIRMED || 0) + (c.SHORT || 0), q = A.recon.questions.length;
-    const head = q ? `I need your help with ${q} thing${q > 1 ? 's' : ''}.` : (c.UNMATCHED || c.DUPLICATE || (A.audit && A.audit.length)) ? 'Mostly matched, with a few things to look at.' : 'Everything matched.';
-    return { head, facts: [[A.nPays, 'payments read'], [ok, 'matched to invoices'], [q, 'need your decision'], [(c.UNMATCHED || 0) + (c.DUPLICATE || 0), 'to look at']], sub: q && c.WAITING ? `${c.WAITING} more payment${c.WAITING > 1 ? 's' : ''} will be checked as soon as you answer.` : '' };
-  }
-  if (A.mixed) return { head: 'Your files use different currencies.', facts: [], sub: 'Set the bank statement and the invoice list to the same currency (use the dropdown in each file) and I will match them. I do not convert between them while matching, because exchange rates change every day.' };
-  if (A.bank.length) { const e = A.audit.length; const cr = A.bank.reduce((a, l) => a + l.credit, 0), dr = A.bank.reduce((a, l) => a + l.debit, 0); return { head: e ? `${e} balance${e > 1 ? 's don\'t' : ' doesn\'t'} add up.` : 'Every balance adds up.', facts: [[A.bank.length, 'lines read'], [short(cr), 'money in'], [short(dr), 'money out'], [e, 'wrong balances']], sub: A.items.length ? '' : 'Add your invoice list as well and I will match each payment to the invoices it paid.' }; }
-  if (A.g) { const n = A.foot.issues.length; return { head: n ? `${n} total${n > 1 ? 's don\'t' : ' doesn\'t'} add up.` : A.foot.checked ? 'Every total adds up.' : 'I found no totals to check.', facts: [[A.foot.checked, 'totals checked'], [n, 'wrong']], sub: A.foot.checked ? '' : 'I look for a row starting with "Total" or a column named "Total".' }; }
-  if (A.items.length) return { head: 'I have your invoices.', facts: [[A.items.length, 'invoices and credit notes']], sub: 'Add a bank statement and I will match the payments to them.' };
-  return { head: 'Nothing readable yet.', facts: [], sub: 'Check the file type shown in the left panel. I may have read it as the wrong kind.' };
-}
-function colLetter(c) { let s = ''; c++; while (c > 0) { const m = (c - 1) % 26; s = String.fromCharCode(65 + m) + s; c = Math.floor((c - 1) / 26); } return s; }
-function fileOfId(id) { const m = String(id).match(/^S(\d+)-/); return m ? +m[1] - 1 : 0; }
-function findings(A) {
-  const f = [];
-  if (A.audit) A.audit.forEach(e => f.push({ k: 'bad', t: 'Wrong balance', go: [fileOfId(e.id), e.id], h: `On ${D(e.date)} the statement shows ${M(e.shown)}. It should be ${M(e.expect)}, so it is ${M(Math.abs(e.diff))} too ${e.diff > 0 ? 'high' : 'low'}.` }));
-  if (A.recon) A.recon.rows.forEach(r => {
-    if (r.status === 'DUPLICATE') f.push({ k: 'warn', t: 'Paid twice', go: [fileOfId(r.id), r.id], h: `${M(r.amount)} on ${D(r.date)} from ${esc(r.customer || 'unknown')} appears twice. I counted it once, as you said.` });
-    if (r.status === 'SHORT') f.push({ k: 'warn', t: 'Paid less', go: [fileOfId(r.id), r.id], h: `${esc(r.customer)} paid ${M(Math.abs(r.diff))} less than billed on ${D(r.date)}.` });
-    if (r.status === 'UNMATCHED') f.push({ k: 'bad', t: 'No invoice', go: [fileOfId(r.id), r.id], h: `${M(r.amount)} from ${esc(r.customer || 'unknown')} on ${D(r.date)} does not match any invoice. It may be an advance, or an invoice is missing.` });
-  });
-  if (A.foot) A.foot.issues.forEach(i => f.push({ k: 'bad', t: i.kind === 'footing' ? 'Total is wrong' : 'Row total is wrong', go: [A.g.fi, i.r + '-' + i.c], h: `Cell ${colLetter(i.c)}${i.r + 1} shows ${M(i.shown)}, but the numbers add up to ${M(i.expect)} (${M(Math.abs(i.shown - i.expect))} ${i.shown > i.expect ? 'too high' : 'too low'}).` }));
-  return f;
-}
-function qView(q, qi, A) {
-  const row = A.recon.rows.find(r => r.id === q.pay) || {}; const who = row.customer ? esc(row.customer) : 'Someone'; let title, sub;
-  if (q.kind === 'pick') { title = `${who} paid ${M(row.amount)} on ${D(row.date)}`; sub = 'More than one set of invoices adds up to exactly this. Which did they pay?'; }
-  else if (q.kind === 'near') { title = `${who} paid ${M(row.amount)} on ${D(row.date)}`; sub = 'Nothing adds up exactly, but these are close. Did they pay a little less than billed?'; }
-  else if (q.kind === 'dup') { title = `${M(row.amount)} on ${D(row.date)} shows up twice`; sub = 'Same date, amount and description. Is the second one a mistake?'; }
-  else { title = `${M(row.amount)} on ${D(row.date)}`; sub = `The description says "${esc(row.desc)}". I cannot tell who paid. Who was it?`; }
-  const body = q.kind === 'party'
-    ? `<select data-qi="${qi}" aria-label="Who paid"><option value="">Choose a customer</option>${q.options.map((o, oi) => `<option value="${oi}">${esc(o.label)}</option>`).join('')}</select>`
-    : q.options.map((o, oi) => `<button class="opt" data-qi="${qi}" data-oi="${oi}">${esc(o.label)}</button>`).join('');
-  return `<div class="ask"><h3>${title}</h3><p class="small">${sub} <button class="link" data-go="${fileOfId(q.pay)}|${q.pay}">See it in the statement</button></p>${body}</div>`;
-}
-
-// ---------- routing ----------
-function route() { const h = (location.hash || '').slice(1); if (h === 'home' || h === 'overview' || h === 'ask' || /^f\d+$/.test(h)) return h; return S.files.length ? 'overview' : 'home'; }
-function nav(h) { if (location.hash === '#' + h) render(); else location.hash = h; }
-window.addEventListener('hashchange', () => render());
-
-// ---------- shell ----------
-const ICON = { bank: 'Bk', ledger: 'In', sheet: 'Xl' }; const KINDS = { bank: 'Bank statement', ledger: 'Invoice list', sheet: 'Spreadsheet' };
-function sideHtml(A, v) {
-  const nq = A.recon ? A.recon.questions.length : 0;
-  const cur = x => v === x ? ' aria-current="page"' : '';
-  return `<button class="nav" data-nav="overview"${cur('overview')}><span class="ic">✓</span><span class="tx"><b>Overview</b><small>What I found</small></span>${nq ? `<span class="badge">${nq}</span>` : ''}</button>
-  <button class="nav" data-nav="ask"${cur('ask')}><span class="ic">?</span><span class="tx"><b>Ask</b><small>Questions about your files</small></span></button>
-  <h4>Your files</h4>
-  ${S.files.map((f, i) => `<button class="nav" data-nav="f${i}"${cur('f' + i)}><span class="ic">${ICON[f.kind]}</span><span class="tx"><b>${esc(f.name)}</b><small>${KINDS[f.kind]}</small></span></button>`).join('')}
-  <button class="nav" id="addFile"><span class="ic">+</span><span class="tx"><b>Add file</b></span></button>`;
-}
-function render() {
-  const y = window.scrollY; let v = route();
-  const A = analyze(); window.__A = A; curBox();
-  if (v.startsWith('f') && v !== 'overview' && !S.files[+v.slice(1)]) v = S.files.length ? 'overview' : 'home';
-  if ((v === 'overview' || v === 'ask') && !S.files.length) v = 'home';
-  $('#back').hidden = v === 'home';
-  let body;
-  if (v === 'home') body = homeView();
-  else if (v === 'overview') body = overviewView(A);
-  else if (v === 'ask') body = askView();
-  else body = fileView(A, +v.slice(1));
-  $('#root').innerHTML = v === 'home' ? `<div class="main narrow" style="margin:0 auto">${body}</div>` : `<div class="shell"><nav class="side" aria-label="Your files">${sideHtml(A, v)}</nav><main class="main">${body}</main></div>`;
-  bindAll(A, v); window.scrollTo(0, y);
-}
-function homeView() {
-  const has = S.files.length;
-  return `<h1>See what is wrong in your finance files.</h1><p class="muted">Drop a bank statement, an invoice list or a spreadsheet. I will show it as it is, mark what is wrong, and ask you when I am not sure.</p>
-  ${has ? `<p><button class="primary" data-nav="overview">Continue with your ${has} file${has > 1 ? 's' : ''}</button> <button class="link" id="clear">Clear them</button></p>` : ''}
-  <label class="drop" id="drop" tabindex="0"><b>Drop a file here</b><span class="muted">or click to choose. CSV, Excel or PDF. You can also drag one of the samples below into this box.</span></label>
-  <h2 style="margin-top:28px">Or try a sample</h2>
-  <div class="samples">
-    <button class="sample" data-sample="both" draggable="true"><span><b>Bank statement and customer invoices</b><span class="muted small">Match each payment to the invoices it paid. Includes look-alike invoices, a repeat payment and a short payment.</span></span><span class="go">Open</span></button>
-    <button class="sample" data-sample="bank" draggable="true"><span><b>Bank statement only</b><span class="muted small">Check every balance line by line and see money in and out by month.</span></span><span class="go">Open</span></button>
-    <button class="sample" data-sample="sheet" draggable="true"><span><b>Sales spreadsheet</b><span class="muted small">Find totals that do not add up to their parts.</span></span><span class="go">Open</span></button>
-  </div><p class="foot">Your files are read inside this browser. Nothing is sent to a server.</p>`;
-}
-function overviewView(A) {
-  const sm = summaryLines(A), fi = findings(A), q = A.recon ? A.recon.questions : [];
-  const warn = S.files.flatMap(f => f.warn.map(w => `<div class="note warn">${esc(f.name)}: ${esc(w)}</div>`)).join('');
-  const unpaid = A.recon ? unpaidBars(A.recon.outstanding) : '';
-  const showFind = A.recon || A.audit || A.foot;
-  return `<div class="narrow"><h2>What I found</h2>${warn}
-  <div class="card"><p class="big">${esc(sm.head)}</p>${sm.sub ? `<p class="muted small">${esc(sm.sub)}</p>` : ''}<div class="facts">${sm.facts.map(([v, l]) => `<div class="fact"><b>${v}</b><span>${l}</span></div>`).join('')}</div></div>
-  ${q.length ? `<h2>Needs your decision</h2>${q.map((x, i) => qView(x, i, A)).join('')}` : ''}
-  ${showFind ? `<h2>Things to look at</h2><div class="card">${fi.length ? fi.map(x => `<div class="find"><span class="tag ${x.k}">${x.t}</span><div>${x.h}<br><button class="link small" data-go="${x.go[0]}|${x.go[1]}">Show me in the file</button></div></div>`).join('') : '<div class="find"><span class="tag good">All clear</span><div>Nothing wrong found.</div></div>'}</div>` : ''}
-  ${A.bank.length ? `<h2>Money in and out</h2><div class="card">${monthlyChart(A.bank)}</div>` : ''}
-  ${unpaid ? `<h2>Still unpaid</h2><div class="card">${unpaid}<p class="muted small" style="margin:10px 0 0">${A.recon.outstanding.length} invoices not yet paid, ${M(A.recon.outstanding.reduce((a, i) => a + i.amount, 0))} in total${q.length ? '. This can change after you answer.' : '.'}</p></div>` : ''}
-  <div style="margin-top:16px"><button id="copy">Copy summary</button></div>${details(A)}</div>`;
-}
-function details(A) {
-  let h = ''; const tr = A.recon ? A.recon.trail : []; const ans = Object.keys(S.answers).map(k => k + ': ' + JSON.stringify(S.answers[k]));
-  if (tr.length || ans.length) h += `<details><summary>How I decided, step by step</summary><pre>${esc(tr.slice(0, 2000).join('\n'))}${ans.length ? '\n\nYour answers:\n' + esc(ans.join('\n')) : ''}</pre></details>`;
-  if (S.key && A.recon) { let ok = 0, bad = 0; A.recon.rows.forEach(r => { if (['CERTAIN', 'CONFIRMED'].includes(r.status)) (r.ids.slice().sort().join() === (S.key.match[r.id] || []).slice().sort().join()) ? ok++ : bad++; });
-    h += `<details><summary>Check me against the sample's answer sheet</summary><p class="small" style="margin-top:8px">I made this sample, so I know the right answers. Of ${ok + bad} payments I matched so far, ${bad} are wrong. The sample hides 1 repeated payment, 1 short payment and 1 wrong balance.</p></details>`; }
-  return h;
-}
-
-// ---------- documents ----------
-function docHead(f, fi, extra) {
-  return `<div class="dochead"><div><div class="eyebrow">${KINDS[f.kind]}</div><h1>${esc(f.name)}</h1></div><div class="tools">${extra || ''}
-  <label>Amounts in <select data-cur="${fi}"><option value="INR"${f.cur === 'INR' ? ' selected' : ''}>₹ Rupees</option><option value="USD"${f.cur === 'USD' ? ' selected' : ''}>$ Dollars</option></select></label>
-  <label>This file is <select data-k="${fi}">${Object.entries(KINDS).map(([k, l]) => `<option value="${k}"${f.kind === k ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
-  <button class="link" data-del="${fi}">Remove</button></div></div>${f.warn.map(w => `<div class="note warn">${esc(w)}</div>`).join('')}`;
-}
-function fileView(A, fi) {
-  const f = S.files[fi];
-  if (f.kind === 'bank') return bankDoc(A, f, fi);
-  if (f.kind === 'ledger') return ledgerDoc(A, f, fi);
-  return sheetDoc(A, f, fi);
-}
-const SHOWONLY = {};
-function bankDoc(A, f, fi) {
-  const rows = f.bank.map(l => Object.assign({}, l, { key: 'S' + (fi + 1) + '-' + l.id.slice(1) }));
-  const first = rows[0], last = rows[rows.length - 1];
-  const open = first && first.balance != null ? first.balance - first.credit + first.debit : null;
-  const probs = rows.filter(l => A.auditBy && A.auditBy[l.key] || (A.byRow && A.byRow[l.key] && !['CERTAIN', 'CONFIRMED'].includes(A.byRow[l.key].status))).length;
-  const only = !!SHOWONLY[fi];
-  const body = rows.filter(l => { if (!only) return true; return (A.auditBy && A.auditBy[l.key]) || (A.byRow && A.byRow[l.key] && !['CERTAIN', 'CONFIRMED'].includes(A.byRow[l.key].status)); }).map(l => {
+// ---------- documents (statement, invoice list, spreadsheet) ----------
+const KINDS = { bank: 'Bank statement', ledger: 'Invoice list', sheet: 'Spreadsheet' }; const ICON = { bank: 'Bk', ledger: 'In', sheet: 'Xl' };
+function bankRows(A, f, fi, only, limit) {
+  const prob = l => (A.auditBy && A.auditBy[l.key]) || (A.byRow && A.byRow[l.key] && !['CERTAIN', 'CONFIRMED'].includes(A.byRow[l.key].status));
+  let rows = f.bank.map(l => Object.assign({}, l, { key: 'S' + (fi + 1) + '-' + l.id.slice(1) }));
+  const nprob = rows.filter(prob).length;
+  if (only) rows = rows.filter(prob);
+  if (limit) { const p = rows.filter(prob); rows = (p.length ? p : rows).slice(0, limit); }
+  const html = rows.map(l => {
     const e = A.auditBy && A.auditBy[l.key], r = A.byRow && A.byRow[l.key]; let cls = '', chip = '';
     if (r) {
-      const st = r.status; const ids = r.ids.join(', ');
+      const st = r.status, ids = r.ids.join(', ');
       if (st === 'CERTAIN') chip = `<span class="chip">Paid ${esc(ids)}</span>`;
       else if (st === 'CONFIRMED') chip = `<span class="chip">You chose: ${esc(ids)}</span>`;
       else if (st === 'SHORT') { chip = `<span class="chip warn">Paid ${M(Math.abs(r.diff), f.cur)} less than billed</span>`; cls = 'warn'; }
       else if (st === 'DUPLICATE') { chip = `<span class="chip warn">Repeat payment (ignored)</span>`; cls = 'warn'; }
       else if (st === 'UNMATCHED') { chip = `<span class="chip bad">No invoice matches</span>`; cls = 'bad'; }
-      else { chip = `<span class="chip warn"><button data-nav="overview">Waiting for your answer</button></span>`; cls = 'warn'; }
+      else { chip = `<span class="chip warn">Waiting for your answer</span>`; cls = 'warn'; }
     }
     if (e) { cls = 'bad'; chip = (chip ? chip + ' ' : '') + `<span class="chip bad">Balance should be ${M(e.expect, f.cur)}</span>`; }
     return `<tr class="${cls}" data-k="${l.key}"><td class="n">${D(l.date)}</td><td>${esc(l.desc)}</td><td class="n r">${l.debit ? plainNum(l.debit, f.cur) : ''}</td><td class="n r">${l.credit ? plainNum(l.credit, f.cur) : ''}</td><td class="n r">${l.balance != null ? plainNum(l.balance, f.cur) : ''}</td><td>${chip}</td></tr>`;
   }).join('');
-  const sym = S.disp === 'INR' ? '₹' : '$';
-  return `${docHead(f, fi, `<label><input type="checkbox" data-only="${fi}"${only ? ' checked' : ''}> Show only problems${probs ? ' (' + probs + ')' : ''}</label>`)}
-  <div class="paper"><div class="papermeta"><span>Period <b>${first ? D(first.date) : ''} – ${last ? D(last.date) : ''}</b></span>${open != null ? `<span>Opening balance <b>${M(open, f.cur)}</b></span>` : ''}${last && last.balance != null ? `<span>Closing balance <b>${M(last.balance, f.cur)}</b></span>` : ''}<span><b>${rows.length}</b> lines</span></div>
-  <div class="scroll"><table class="doc"><thead><tr><th>Date</th><th>Description</th><th class="r">Money out (${sym})</th><th class="r">Money in (${sym})</th><th class="r">Balance (${sym})</th><th>Check</th></tr></thead><tbody>${body || '<tr><td colspan="6" class="muted">No problem lines. Untick the box to see everything.</td></tr>'}</tbody></table></div></div>
-  ${f.cur !== S.disp ? `<p class="muted small" style="margin-top:8px">Converted at 1 $ = ₹${S.rate}. The file itself is in ${f.cur === 'INR' ? 'rupees' : 'dollars'}.</p>` : ''}`;
+  return { html, nprob };
 }
-function ledgerDoc(A, f, fi) {
-  const only = !!SHOWONLY[fi]; const items = f.items.slice().sort((a, b) => a.date - b.date);
-  const un = A.unpaid ? items.filter(i => A.unpaid.has(i.id)).length : 0;
-  const body = items.filter(i => !only || (A.unpaid && A.unpaid.has(i.id))).map(i => {
-    let st = '<span class="chip plain">Not checked yet</span>', cls = '';
-    if (i.amount < 0) st = '<span class="chip plain">Credit note</span>';
-    if (A.recon) { const p = A.paidBy[i.id]; if (p) st = `<span class="chip">Paid ${D(p.date)}</span>`; else if (A.unpaid.has(i.id)) { st = '<span class="chip warn">Unpaid</span>'; } }
-    return `<tr class="${cls}" data-k="${esc(i.id)}"><td>${esc(i.id)}</td><td>${esc(i.customer)}</td><td class="n">${D(i.date)}</td><td class="n r">${plainNum(i.amount, f.cur)}</td><td>${st}</td></tr>`;
+function bankTable(A, f, fi, only, limit) {
+  const { html } = bankRows(A, f, fi, only, limit); const sym = S.disp === 'INR' ? '₹' : '$';
+  return `<div class="tbl"><table class="doc"><thead><tr><th>Date</th><th>Description</th><th class="r">Out (${sym})</th><th class="r">In (${sym})</th><th class="r">Balance (${sym})</th><th>Check</th></tr></thead><tbody>${html || '<tr><td colspan="6" class="muted">No problem lines.</td></tr>'}</tbody></table></div>`;
+}
+function ledgerTable(A, f, only, limit) {
+  let items = f.items.slice().sort((a, b) => a.date - b.date); if (only && A.unpaid) items = items.filter(i => A.unpaid.has(i.id)); if (limit) items = items.slice(0, limit);
+  const sym = S.disp === 'INR' ? '₹' : '$';
+  const body = items.map(i => {
+    let st = '<span class="chip plain">Not checked yet</span>'; if (i.amount < 0) st = '<span class="chip plain">Credit note</span>';
+    if (A.recon) { const p = A.paidBy[i.id]; if (p) st = `<span class="chip">Paid ${D(p.date)}</span>`; else if (A.unpaid.has(i.id)) st = '<span class="chip warn">Unpaid</span>'; }
+    return `<tr data-k="${esc(i.id)}"><td>${esc(i.id)}</td><td>${esc(i.customer)}</td><td class="n">${D(i.date)}</td><td class="n r">${plainNum(i.amount, f.cur)}</td><td>${st}</td></tr>`;
   }).join('');
-  const sym = S.disp === 'INR' ? '₹' : '$';
-  return `${docHead(f, fi, A.recon ? `<label><input type="checkbox" data-only="${fi}"${only ? ' checked' : ''}> Show only unpaid (${un})</label>` : '')}
-  <div class="paper"><div class="papermeta"><span><b>${items.length}</b> invoices and credit notes</span><span><b>${new Set(items.map(i => i.customer)).size}</b> customers</span><span>Total billed <b>${M(items.reduce((a, i) => a + i.amount, 0), f.cur)}</b></span></div>
-  <div class="scroll"><table class="doc"><thead><tr><th>No.</th><th>Customer</th><th>Date</th><th class="r">Amount (${sym})</th><th>Status</th></tr></thead><tbody>${body || '<tr><td colspan="5" class="muted">Nothing to show.</td></tr>'}</tbody></table></div></div>
-  ${A.recon ? '' : '<p class="muted small" style="margin-top:8px">Add a bank statement and the status of each invoice fills in here.</p>'}`;
+  return `<div class="tbl"><table class="doc"><thead><tr><th>No.</th><th>Customer</th><th>Date</th><th class="r">Amount (${sym})</th><th>Status</th></tr></thead><tbody>${body}</tbody></table></div>`;
 }
-function sheetDoc(A, f, fi) {
-  const g = f.grid, isG = A.g && A.g.fi === fi; const ncol = Math.max(...g.map(r => r.length)); const conv_ = f.cur !== S.disp;
+function sheetTable(A, f, fi, limit) {
+  const g = limit ? f.grid.slice(0, limit) : f.grid, isG = A.g && A.g.fi === fi, ncol = Math.max(...g.map(r => r.length)), conv_ = f.cur !== S.disp;
   const head = '<tr><th class="rn"></th>' + Array.from({ length: ncol }, (_, c) => `<th>${colLetter(c)}</th>`).join('') + '</tr>';
   const body = g.map((row, r) => {
     const tot = /total/i.test(String(row[0] || '')) && r > 0;
     const tds = Array.from({ length: ncol }, (_, c) => {
-      let v = row[c]; const isNum = c > 0 && r > 0 && v !== '' && v != null && !/[A-Za-z]/.test(String(v)) && E.parseMoney(v) != null; let txt = v == null ? '' : String(v);
+      const v = row[c]; const isNum = c > 0 && r > 0 && v !== '' && v != null && !/[A-Za-z]/.test(String(v)) && E.parseMoney(v) != null; let txt = v == null ? '' : String(v);
       if (isNum) txt = conv_ ? plainNum(E.parseMoney(v), f.cur) : (typeof v === 'number' ? v.toLocaleString(S.disp === 'INR' ? 'en-IN' : 'en-US') : txt);
       const e = isG && A.footBy[r + '-' + c];
       return `<td class="${isNum ? 'num ' : ''}${e ? 'err' : ''}" data-k="${r}-${c}"${e ? ` title="Shows ${esc(M(e.shown, f.cur))}, adds up to ${esc(M(e.expect, f.cur))}"` : ''}>${esc(txt)}</td>`;
     }).join('');
     return `<tr class="${tot ? 'tot' : ''}"><th class="rn">${r + 1}</th>${tds}</tr>`;
   }).join('');
-  const issues = isG ? A.foot.issues : [];
-  return `${docHead(f, fi)}
-  <div class="paper"><div class="scroll"><table class="sheet"><thead>${head}</thead><tbody>${body}</tbody></table></div>
-  <div class="sheetnote">${isG ? (issues.length ? `<b>${issues.length} cell${issues.length > 1 ? 's' : ''} marked red</b> do not add up: ${issues.map(i => `<button class="link" data-go="${fi}|${i.r}-${i.c}">${colLetter(i.c)}${i.r + 1}</button>`).join(', ')}. Tap or hover a red cell to see what it should be.` : A.foot.checked ? 'Every total in this sheet adds up.' : 'I found no totals to check in this sheet.') : ''}${conv_ ? `<br><span class="muted">Numbers are shown converted at 1 $ = ₹${S.rate}. Only number cells (not the first column or row) are converted.</span>` : ''}</div></div>`;
+  return `<div class="tbl"><table class="sheet"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
+}
+function docFull(A, fi) {
+  const f = A.files[fi]; if (!f) return '<p class="muted">That file is no longer in this chat.</p>';
+  const only = !!(DR && DR.only);
+  const tools = `<div class="dtools"><label>Amounts in <select data-cur="${fi}"><option value="INR"${f.cur === 'INR' ? ' selected' : ''}>₹ Rupees</option><option value="USD"${f.cur === 'USD' ? ' selected' : ''}>$ Dollars</option></select></label>
+  <label>File is a <select data-k="${fi}">${Object.entries(KINDS).map(([k, l]) => `<option value="${k}"${f.kind === k ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+  ${f.kind !== 'sheet' ? `<label><input type="checkbox" data-only="1"${only ? ' checked' : ''}> Only problems</label>` : ''}<button class="link" data-del="${fi}">Remove file</button></div>${f.warn.map(w => `<div class="note warn">${esc(w)}</div>`).join('')}`;
+  let meta = '', body = '';
+  if (f.kind === 'bank') {
+    const first = f.bank[0], last = f.bank[f.bank.length - 1], open = first && first.balance != null ? first.balance - first.credit + first.debit : null;
+    meta = `<div class="papermeta"><span>Period <b>${first ? D(first.date) : ''} – ${last ? D(last.date) : ''}</b></span>${open != null ? `<span>Opening <b>${M(open, f.cur)}</b></span>` : ''}${last && last.balance != null ? `<span>Closing <b>${M(last.balance, f.cur)}</b></span>` : ''}<span><b>${f.bank.length}</b> lines</span></div>`;
+    body = bankTable(A, f, fi, only);
+  } else if (f.kind === 'ledger') {
+    meta = `<div class="papermeta"><span><b>${f.items.length}</b> invoices and credit notes</span><span><b>${new Set(f.items.map(i => i.customer)).size}</b> customers</span><span>Total billed <b>${M(f.items.reduce((a, i) => a + i.amount, 0), f.cur)}</b></span></div>`;
+    body = ledgerTable(A, f, only);
+  } else {
+    const isG = A.g && A.g.fi === fi, n = isG ? A.foot.issues.length : 0;
+    meta = `<div class="papermeta"><span>${isG ? (n ? `<b>${n}</b> cell${n > 1 ? 's' : ''} in red do not add up. Hover or tap one to see what it should be.` : A.foot.checked ? 'Every total adds up.' : 'No totals found to check.') : ''}</span></div>`;
+    body = sheetTable(A, f, fi);
+  }
+  return `${tools}${meta}${body}${f.cur !== S.disp ? `<p class="muted small">Converted at 1 $ = ₹${S.rate}. The file itself is in ${f.cur === 'INR' ? 'rupees' : 'dollars'}.</p>` : ''}`;
+}
+function drawerHtml(A) {
+  const tabs = A.files.map((f, i) => `<button class="dtab" role="tab" data-open="${i}" aria-selected="${DR.fi === i}">${esc(f.name)}</button>`).join('');
+  return `<div class="dhead"><div class="tabs" role="tablist">${tabs}</div><button class="icon" id="dclose" aria-label="Close the document">✕</button></div><div class="dbody" id="dbody">${docFull(A, DR.fi)}</div>`;
 }
 
-// ---------- ask ----------
-const SUG = ['How much is still unpaid?', 'Anything that does not add up?', 'Any payments made twice?', 'EMI for 12 lakh at 8.5% for 15 years', 'GST 18% on 2500'];
-function askView() {
-  const th = S.chat.map(m => `<div class="msg ${m.who}">${m.who === 'me' ? esc(m.text) : m.html}</div>`).join('');
-  return `<div class="narrow"><h2>Ask about your files</h2><p class="muted small">Answers come from your files and say which part they used. If I cannot answer, I say so.</p><div class="thread" id="thread">${th}</div><div class="chips">${SUG.map(s => `<button data-s="${esc(s)}">${esc(s)}</button>`).join('')}</div>
-  <form class="ask-in" id="askForm"><input type="text" id="askIn" placeholder="Ask anything about your files" aria-label="Ask anything about your files" autocomplete="off"><button class="primary" type="submit">Ask</button></form></div>`;
+// ---------- question cards (decisions) ----------
+function qHtml(q, A) {
+  const row = A.recon.rows.find(r => r.id === q.pay) || {}; const who = row.customer ? esc(row.customer) : 'Someone'; let title, sub;
+  if (q.kind === 'pick') { title = `${who} paid ${M(row.amount)} on ${D(row.date)}`; sub = 'More than one set of invoices adds up to exactly this. Which did they pay?'; }
+  else if (q.kind === 'near') { title = `${who} paid ${M(row.amount)} on ${D(row.date)}`; sub = 'Nothing adds up exactly, but these are close. Did they pay a little less than billed?'; }
+  else if (q.kind === 'dup') { title = `${M(row.amount)} on ${D(row.date)} shows up twice`; sub = 'Same date, amount and description. Is the second one a mistake?'; }
+  else { title = `${M(row.amount)} on ${D(row.date)}`; sub = `The description says "${esc(row.desc)}". I cannot tell who paid. Who was it?`; }
+  const body = q.kind === 'party'
+    ? `<select data-pay="${esc(q.pay)}" aria-label="Who paid"><option value="">Choose a customer</option>${q.options.map((o, oi) => `<option value="${oi}">${esc(o.label)}</option>`).join('')}</select>`
+    : q.options.map((o, oi) => `<button class="opt" data-pay="${esc(q.pay)}" data-oi="${oi}">${esc(o.label)}</button>`).join('');
+  return `<div class="q"><h4>${title}</h4><p>${sub} <button class="link" data-go="${fileOfId(q.pay)}|${q.pay}">See it in the statement</button></p>${body}</div>`;
 }
-function ask(q) { S.chat.push({ who: 'me', text: q }); S.chat.push({ who: 'ai', html: answer(q, window.__A || analyze()) }); S.chat = S.chat.slice(-40); save(); nav('ask'); setTimeout(() => { const t = $('#thread'); if (t && t.lastChild) t.lastChild.scrollIntoView({ block: 'nearest' }); const i = $('#askIn'); if (i) i.focus({ preventScroll: true }); }, 0); }
-const src = t => `<span class="src">Based on: ${t}</span>`;
-function answer(q, A) {
-  const t = q.toLowerCase(), rec = A.recon, bank = A.bank, items = A.items;
-  const names = [...new Set(items.map(i => i.customer))]; const who = names.find(n => t.includes(n.toLowerCase()));
-  if (/emi|loan/.test(t)) {
-    const pr = t.match(/(\d[\d,]*(?:\.\d+)?)\s*(lakh|lac|crore|cr|k)?/), rate = t.match(/(\d+(?:\.\d+)?)\s*%/), yr = t.match(/(\d+(?:\.\d+)?)\s*(?:years?|yrs?|y\b)/), mo = t.match(/(\d+)\s*(?:months?|mos?)/);
-    if (!pr || !rate || !(yr || mo)) return 'To work out an EMI I need the amount, the yearly rate and the time. For example: "EMI for 500000 at 9% for 5 years".';
-    let p = parseFloat(pr[1].replace(/,/g, '')); const u = pr[2] || ''; if (/lakh|lac/.test(u)) p *= 1e5; else if (/crore|^cr$/.test(u)) p *= 1e7; else if (u === 'k') p *= 1e3;
-    const months = mo ? +mo[1] : Math.round(parseFloat(yr[1]) * 12), L = E.loan(Math.round(p * 100), Math.round(parseFloat(rate[1]) * 100), months);
-    return `A loan of ${M(Math.round(p * 100))} at ${rate[1]}% for ${months} months has an EMI of <b>${M(L.emi)}</b>. You would pay ${M(L.totInt)} interest, ${M(L.totPaid)} in all.${src('the standard EMI formula; the schedule repays exactly the loan amount' + (L.putBack ? '' : ' (CHECK FAILED)'))}`;
+function decisionsHtml(A, isLatest) {
+  if (!A.recon) return '';
+  const qs = A.recon.questions;
+  if (!qs.length) return '<div class="note good">No decisions needed. Everything that could be decided has been.</div>';
+  if (!isLatest) return `<div class="note warn">${qs.length} decision${qs.length > 1 ? 's' : ''} still open. They are in my latest message below.</div>`;
+  const show = qs.slice(0, 3);
+  return `<div class="note warn"><b>${qs.length} decision${qs.length > 1 ? 's' : ''} need you.</b> I will not choose for you.${qs.length > 3 ? ' Here are the first 3.' : ''}</div>${show.map(q => qHtml(q, A)).join('')}`;
+}
+const goBtn = x => `<button class="link" data-go="${x.go[0]}|${x.go[1]}">Show me in the file</button>`;
+function findHtml(list) { return list.map(x => `<div class="find"><span class="tag ${x.k}">${x.t}</span><div>${x.h}<br>${goBtn(x)}</div></div>`).join(''); }
+
+// ---------- what the assistant understands ----------
+const STEPS = {
+  summary: ['Reading your files', 'Re-adding every balance', 'Matching payments to invoices', 'Writing it up'],
+  recon: ['Reading your payments', 'Looking for exact matches', 'Checking look-alike invoices'],
+  decisions: ['Finding what I am unsure about'], audit: ['Reading the statement', 'Re-adding every balance'], foot: ['Reading the sheet', 'Adding up each total'],
+  unpaid: ['Finding open invoices', 'Totalling by customer'], chart: ['Grouping by month', 'Drawing the chart'], issues: ['Going through every check'], dups: ['Looking for repeat payments'],
+  emi: ['Working out the instalment', 'Checking the schedule repays the loan'], gst: ['Splitting the tax'], xirr: ['Lining up the dates', 'Searching for the rate'], doc: ['Opening the document'],
+  stat: ['Adding up the lines'], files: ['Reading your file'], sample: ['Setting up the sample files'], currency: ['Converting'], help: ['One moment'], default: ['Thinking it through']
+};
+function need(kind, c) { const has = k => c.files.some(f => f.kind === k); const any = c.files.length > 0; const b = has('bank'), l = has('ledger'), s = has('sheet');
+  const map = { summary: any, recon: b && l, decisions: b && l, audit: b, foot: s, unpaid: b && l, chart: b, issues: any, dups: b && l, stat: b, doc: any };
+  return map[kind] === undefined ? true : map[kind]; }
+function parseCalc(t) {
+  const usd = /\$|dollar|usd/.test(t);
+  const pr = t.match(/(\d[\d,]*(?:\.\d+)?)\s*(lakh|lac|crore|cr|k|million|m)?\b/), rate = t.match(/(\d+(?:\.\d+)?)\s*%/), yr = t.match(/(\d+(?:\.\d+)?)\s*(?:years?|yrs?|y)\b/), mo = t.match(/(\d+)\s*(?:months?|mos?)\b/);
+  let p = pr ? parseFloat(pr[1].replace(/,/g, '')) : null; const u = pr ? (pr[2] || '') : '';
+  if (p != null) { if (/lakh|lac/.test(u)) p *= 1e5; else if (/crore|^cr$/.test(u)) p *= 1e7; else if (u === 'k') p *= 1e3; else if (/million|^m$/.test(u)) p *= 1e6; }
+  return { p, rate: rate ? parseFloat(rate[1]) : null, months: mo ? +mo[1] : yr ? Math.round(parseFloat(yr[1]) * 12) : null, cur: usd ? 'USD' : 'INR' };
+}
+function understand(text, c) {
+  const t = text.toLowerCase().replace(/[?!]+$/g, '').trim(); const A = null; const names = [...new Set(c.files.flatMap(f => (f.items || []).map(i => i.customer)))];
+  const who = names.find(n => t.includes(n.toLowerCase())); const show = /\b(show|open|see|view|display|read|preview|let me see)\b/.test(t);
+  if (/^(help|what can you|what do you|how do i|how does this|commands|options)/.test(t) || /what can (you|i)/.test(t)) return { kind: 'help' };
+  if (/^(new chat|start over|clear( everything| all)?|reset)$/.test(t)) return { kind: 'newchat' };
+  if (/\bemi\b|\bloan\b|instalment|installment|mortgage/.test(t)) { const k = parseCalc(t); return k.p && k.rate != null && k.months ? { kind: 'emi', args: k } : { kind: 'needcalc', args: { what: 'EMI', ex: 'EMI for 12 lakh at 8.5% for 15 years' } }; }
+  if (/\bgst\b|\bvat\b/.test(t)) { const rate = t.match(/(\d+(?:\.\d+)?)\s*%/), am = t.replace(rate ? rate[0] : '', '').match(/(\d[\d,]*(?:\.\d+)?)/); const k = parseCalc(t); return rate && am ? { kind: 'gst', args: { rate: parseFloat(rate[1]), amount: parseFloat(am[1].replace(/,/g, '')) * (/lakh|lac/.test(t) ? 1e5 : 1), incl: /inclusive|incl|including|already/.test(t), igst: /igst|interstate|inter-state|other state/.test(t), cur: k.cur } } : { kind: 'needcalc', args: { what: 'GST', ex: 'GST 18% on 2500' } }; }
+  if (/xirr|irr\b|internal rate|rate of return/.test(t)) {
+    const re = /(-?\(?\d[\d,]*(?:\.\d+)?\)?)\s*(?:on|at|@|dated)?\s*(\d{4}-\d{2}-\d{2}|\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4})/g; const fl = []; let m;
+    while ((m = re.exec(t))) { const d = E.parseDate(m[2]), a = E.parseMoney(m[1].replace(/[()]/g, m1 => m1 === '(' ? '-' : '')); if (d != null && a != null) fl.push({ date: d, amt: a / 100 }); }
+    return fl.length >= 2 ? { kind: 'xirr', args: { fl } } : { kind: 'needcalc', args: { what: 'XIRR', ex: 'XIRR -100000 on 2025-01-01, 30000 on 2025-07-01, 90000 on 2026-01-01' } };
   }
-  if (/gst/.test(t)) {
-    const rate = t.match(/(\d+(?:\.\d+)?)\s*%/), am = t.replace(rate ? rate[0] : '', '').match(/(\d[\d,]*(?:\.\d+)?)/);
-    if (!rate || !am) return 'Tell me the rate and the amount, for example "GST 18% on 2500". Add "inclusive" if the amount already has GST in it.';
-    const g = E.gst(Math.round(parseFloat(am[1].replace(/,/g, '')) * 100), parseFloat(rate[1]), /inclusive|incl/.test(t), /igst|interstate|inter-state/.test(t));
-    return `Price ${M(g.base)} + GST ${M(g.tax)} = <b>${M(g.total)}</b>${g.igst ? '' : ' (CGST ' + M(g.cgst) + ' + SGST ' + M(g.sgst) + ')'}.${src('the GST rate you gave, rounded to the nearest paisa')}`;
+  const rateM = t.match(/(?:rate|exchange)\D{0,25}?(\d+(?:\.\d+)?)/);
+  if (rateM && /rate|exchange/.test(t) && !/interest/.test(t)) return { kind: 'currency', args: { rate: parseFloat(rateM[1]) } };
+  if ((/dollar|usd|\$/.test(t)) && /(show|convert|switch|display|in|to|see|change)/.test(t)) return { kind: 'currency', args: { disp: 'USD' } };
+  if ((/rupee|inr|₹/.test(t)) && /(show|convert|switch|display|in|to|see|change)/.test(t)) return { kind: 'currency', args: { disp: 'INR' } };
+  if (/(sample|demo|example)/.test(t) && !/emi|gst/.test(t)) return { kind: 'sample', args: { which: /sheet|spreadsheet|sales/.test(t) ? 'sheet' : /(bank|statement)/.test(t) && !/invoice/.test(t) ? 'bank' : 'both' } };
+  if (show && /(invoice|ledger|bills?)/.test(t) && !/unpaid/.test(t)) return { kind: 'doc', args: { which: 'ledger' } };
+  if (show && /(statement|bank)/.test(t)) return { kind: 'doc', args: { which: 'bank' } };
+  if (show && /(sheet|spreadsheet|excel|workbook)/.test(t)) return { kind: 'doc', args: { which: 'sheet' } };
+  if (/(question|decision|waiting for me|need me|pending|your help)/.test(t)) return { kind: 'decisions' };
+  if (/reconcil|match|settle|which invoices|allocate|apply (the )?payments/.test(t)) return { kind: 'recon' };
+  if (/(total|how much|how many).*(receiv|came in|money in|collect|income|spent|went out|money out|paid out|expens)|(received|came in|went out|spent)\b/.test(t)) return { kind: 'stat', args: { out: /(spent|went out|money out|paid out|expens)/.test(t) } };
+  if (/balance|running/.test(t)) return { kind: 'audit' };
+  if (/(total|foot|add up|adds up|\bsum\b|sheet|spreadsheet|excel)/.test(t) && !/unpaid|owe|summar/.test(t)) return { kind: 'foot' };
+  if (/unpaid|owe|outstanding|\bdue\b|receivable|pending invoice|who hasn/.test(t)) return { kind: 'unpaid', args: { who } };
+  if (/twice|duplicate|repeat|double/.test(t)) return { kind: 'dups' };
+  if (/short|less than billed|underpaid/.test(t)) return { kind: 'issues', args: { only: 'short', title: 'Short payments' } };
+  if (/chart|graph|plot|trend|monthly|cash ?flow|by month|money in and out|in and out/.test(t)) return { kind: 'chart' };
+  if (/(wrong|error|mistake|problem|issue|anything|not add up|mismatch|flag|exception|incorrect)/.test(t)) return { kind: 'issues', args: { title: 'Things to look at' } };
+  if (/(summary|summar|overview|analy[sz]e|check (it|everything|all|my)|review|what did you find|findings|go through|look at (it|my|the))/.test(t)) return { kind: 'summary' };
+  if (who) return { kind: 'unpaid', args: { who } };
+  return { kind: 'unknown', args: { text } };
+}
+
+// ---------- suggestions (grey text and the list above the box) ----------
+function suggestions() {
+  const c = C(), f = c.files; const b = f.some(x => x.kind === 'bank'), l = f.some(x => x.kind === 'ledger'), s = f.some(x => x.kind === 'sheet');
+  const names = [...new Set(f.flatMap(x => (x.items || []).map(i => i.customer)))].slice(0, 3); const L = [];
+  if (!f.length) L.push('Load the sample bank statement and invoices', 'Load the sample sales spreadsheet', 'Load the sample bank statement only');
+  else L.push('Give me a summary of my files');
+  if (b && l) L.push('Match payments to invoices', 'What is still unpaid?', 'Which customer owes the most?', 'Any payments made twice?', 'Show the invoices', ...names.map(n => 'How much does ' + n + ' owe?'));
+  if (b) L.push('Show the bank statement', 'Check the balances', 'Show money in and out by month', 'How much came in?', 'How much went out?');
+  if (s) L.push('Show the spreadsheet', 'Check the totals in my spreadsheet');
+  if (f.length) L.push('Is anything wrong?', 'Show amounts in dollars', 'Show amounts in rupees', 'Set the rate to 83');
+  L.push('EMI for 12 lakh at 8.5% for 15 years', 'GST 18% on 2500', 'GST 12% on 10000 inclusive', 'XIRR -100000 on 2025-01-01, 30000 on 2025-07-01, 90000 on 2026-01-01', 'What can you do?');
+  return [...new Set(L)];
+}
+const CATALOG = ['Give me a summary of my files', 'Match payments to invoices', 'What is still unpaid?', 'Which customer owes the most?', 'Any payments made twice?', 'Show the invoices', 'Show the bank statement', 'Check the balances', 'Show money in and out by month', 'How much came in?', 'How much went out?', 'Show the spreadsheet', 'Check the totals in my spreadsheet', 'Is anything wrong?', 'Are there any short payments?', 'Show amounts in dollars', 'Show amounts in rupees', 'Set the rate to 83'];
+function typingList() { return [...new Set([...suggestions(), ...CATALOG])]; }
+let sugIdx = 0;
+function currentSuggestion() { const v = $('#q').value, all = v ? typingList() : suggestions(); if (!v) return all[sugIdx % all.length]; const lv = v.toLowerCase(); return all.find(s => s.toLowerCase().startsWith(lv) && s.length > v.length) || ''; }
+function updateGhost() { const v = $('#q').value, s = currentSuggestion(); $('#ghost').innerHTML = s ? (v ? `<span class="t">${esc(v)}</span>${esc(s.slice(v.length))}` : esc(s)) : ''; updatePop(); }
+function updatePop() {
+  const v = $('#q').value.trim().toLowerCase(), pop = $('#pop'); if (!v) { pop.hidden = true; return; }
+  const words = v.split(/\s+/).filter(Boolean); const hits = typingList().filter(s => { const ls = s.toLowerCase(); return ls !== v && words.every(w => ls.includes(w)); }).slice(0, 5);
+  if (!hits.length) { pop.hidden = true; return; }
+  pop.hidden = false; pop.innerHTML = hits.map(s => `<button data-fill="${esc(s)}">${esc(s)}</button>`).join('');
+  pop.querySelectorAll('[data-fill]').forEach(b => b.onmousedown = e => { e.preventDefault(); const q = $('#q'); q.value = b.dataset.fill; updateGhost(); q.focus(); });
+}
+
+// ---------- the conversation ----------
+let lastCount = 0, scrollNext = false;
+function addTurn(t) { const c = C(); t.id = uid(); c.turns.push(t); return t; }
+function submit(text) {
+  text = (text || '').trim(); if (!text) return; const c = C(); $('#q').value = ''; updateGhost();
+  if (c.title === 'New chat') c.title = text.length > 34 ? text.slice(0, 34) + '…' : text;
+  const u = understand(text, c); const t = addTurn({ q: text, kind: 'pending', pending: true, steps: STEPS[u.kind] || STEPS.default, started: Date.now(), done: u });
+  scrollNext = true; save(); render(); runTurn(t, u);
+}
+function runTurn(t, u) {
+  const c = C(); const wait = 850;
+  setTimeout(() => {
+    t.pending = false; let k = u.kind, a = u.args || {};
+    if (k === 'newchat') { newChat(); save(); render(); return; }
+    if (k === 'sample') { loadSample(a.which); t.kind = 'files'; t.args = { sample: true }; save(); render(); const s = addTurn({ q: null, kind: 'summary', pending: true, steps: STEPS.summary }); scrollNext = true; render(); setTimeout(() => { s.pending = false; save(); render(); }, wait); return; }
+    if (k === 'currency') { if (a.rate) S.rate = a.rate; if (a.disp) S.disp = a.disp; }
+    if (!need(k, c)) { a = { for: k }; k = 'needfile'; }
+    t.kind = k; t.args = a; scrollNext = true; save(); render();
+  }, wait);
+}
+function loaderHtml(t) {
+  const steps = t.steps || STEPS.default;
+  return `<div class="loader" role="status" aria-label="Working"><div class="candles" aria-hidden="true"><i></i><i class="dn"></i><i></i><i></i><i class="dn"></i><i></i><i class="dn"></i><i></i></div><div class="coin" aria-hidden="true">₹</div><div class="lstep"><b>${esc(steps[0])}</b>…</div></div>`;
+}
+function turnHtml(t, A, latestDecision) {
+  if (t.pending) return `<div class="ai"><div class="mark">Z</div><div class="card">${loaderHtml(t)}</div></div>`;
+  const c = C(); const k = t.kind, a = t.args || {}; let h = '';
+  const sm = () => summaryOf(A);
+  const sumCard = (extraFind) => { const s = sm(), fi = findings(A); return `<p class="big">${esc(s.head)}</p>${s.sub ? `<p class="muted small">${esc(s.sub)}</p>` : ''}<div class="facts">${s.facts.map(([v, l]) => `<div class="fact"><b>${v}</b><span>${l}</span></div>`).join('')}</div>${A.recon ? decisionsHtml(A, latestDecision) : ''}${extraFind && fi.length ? `<h3 style="margin-top:14px">Things to look at</h3>${findHtml(fi.slice(0, 5))}${fi.length > 5 ? `<p class="muted small">and ${fi.length - 5} more. Ask "Is anything wrong?" to see all.</p>` : ''}` : extraFind && (A.recon || A.audit || A.foot) && !A.recon?.questions.length ? '<div class="note good">Nothing wrong found.</div>' : ''}<div class="btns">${c.files.map((f, i) => `<button class="btn" data-open="${i}">Open ${esc(f.name)}</button>`).join('')}</div>`; };
+  if (k === 'files') h = a.sample ? `<p>I set up the sample files. They have problems hidden in them on purpose, so you can see what I find.</p><div class="btns">${c.files.map((f, i) => `<button class="btn" data-open="${i}">Open ${esc(f.name)}</button>`).join('')}</div>` : `<h3>Files read</h3>${c.files.map((f, i) => `<div class="find"><span class="fico">${ICON[f.kind]}</span><div><b>${esc(f.name)}</b><br><span class="muted small">Read as: ${KINDS[f.kind]}${f.bank ? ', ' + f.bank.length + ' lines' : f.items ? ', ' + f.items.length + ' rows' : ''}. <button class="link" data-open="${i}">Open</button></span></div></div>`).join('')}${c.files.flatMap(f => f.warn.map(w => `<div class="note warn">${esc(f.name)}: ${esc(w)}</div>`)).join('')}`;
+  else if (k === 'summary') h = sumCard(true);
+  else if (k === 'recon') h = sumCard(false);
+  else if (k === 'decisions') h = A.recon ? `<h3>Needs your decision</h3>${decisionsHtml(A, latestDecision)}` : '<p>I need both a bank statement and an invoice list in the same currency first.</p>';
+  else if (k === 'audit') { const fi = findings(A).filter(x => x.ty === 'audit'); h = `<h3>Bank balances</h3><p class="big">${fi.length ? `${fi.length} balance${fi.length > 1 ? 's don\'t' : ' doesn\'t'} add up.` : 'Every balance adds up.'}</p><p class="muted small">I re-added each line: previous balance plus money in, minus money out, across ${A.bank.length} lines.</p>${findHtml(fi)}`; }
+  else if (k === 'foot') h = A.foot ? `<h3>Spreadsheet totals</h3><p class="big">${A.foot.issues.length ? `${A.foot.issues.length} total${A.foot.issues.length > 1 ? 's don\'t' : ' doesn\'t'} add up.` : A.foot.checked ? 'Every total adds up.' : 'I found no totals to check.'}</p><p class="muted small">${A.foot.checked} totals checked: each column total against the numbers above it, and each row total against its parts.</p>${findHtml(findings(A).filter(x => x.ty === 'foot'))}${A.g ? `<h3 style="margin-top:12px">Preview</h3>${sheetTable(A, A.g.f, A.g.fi, 9)}<div class="btns"><button class="btn" data-open="${A.g.fi}">Open the full sheet</button></div>` : ''}` : '<p>I need a spreadsheet first.</p>';
+  else if (k === 'dups') { const fi = findings(A).filter(x => x.ty === 'dup'); const asked = A.recon ? A.recon.rows.filter(r => r.status === 'ASK' && /repeat/.test(r.note)) : []; h = `<h3>Repeat payments</h3><p class="big">${fi.length || asked.length ? `${fi.length + asked.length} possible repeat payment${fi.length + asked.length > 1 ? 's' : ''}.` : 'No payment appears twice.'}</p>${findHtml(fi)}${asked.map(r => `<div class="find"><span class="tag warn">Asking you</span><div>${M(r.amount)} on ${D(r.date)} looks like a repeat. I need your answer first.</div></div>`).join('')}`; }
+  else if (k === 'issues') { let fi = findings(A); if (a.only) fi = fi.filter(x => x.ty === a.only); h = `<h3>${esc(a.title || 'Things to look at')}</h3>${fi.length ? `<p class="big">${fi.length} thing${fi.length > 1 ? 's' : ''} to look at.</p>${findHtml(fi)}` : '<p class="big">I found nothing wrong.</p>'}${A.recon && A.recon.questions.length ? `<div class="note warn">${A.recon.questions.length} decision(s) are still open, so this list may grow.</div>` : ''}`; }
+  else if (k === 'chart') h = `<h3>Money in and out</h3>${monthlyChart(A.bank)}`;
+  else if (k === 'unpaid') {
+    if (!A.recon) h = '<p>To know what is unpaid I need both a bank statement and an invoice list in the same currency.</p>';
+    else { let o = A.recon.outstanding; if (a.who) o = o.filter(i => i.customer === a.who); const tot = o.reduce((s, i) => s + i.amount, 0); const by = {}; o.forEach(i => by[i.customer] = (by[i.customer] || 0) + i.amount); const top = Object.entries(by).sort((x, y) => y[1] - x[1])[0];
+      h = `<h3>${a.who ? esc(a.who) : 'Still unpaid'}</h3><p class="big">${M(tot)} unpaid across ${o.length} invoice${o.length === 1 ? '' : 's'}.</p>${!a.who && top ? `<p class="muted small">The most is owed by <b>${esc(top[0])}</b>: ${M(top[1])}.</p>` : ''}${a.who ? '' : unpaidBars(o)}${a.who ? `<div class="tbl"><table class="doc"><tbody>${o.slice(0, 8).map(i => `<tr><td>${esc(i.id)}</td><td class="n">${D(i.date)}</td><td class="n r">${M(i.amount)}</td></tr>`).join('')}</tbody></table></div>` : ''}${A.recon.questions.length ? `<div class="note warn">${A.recon.questions.length} decision(s) are still open, so this can change.</div>` : ''}`; }
   }
-  if (!bank.length && !items.length && !A.g) return 'There is nothing to look at yet. Add a file first, or ask for an EMI or GST calculation.';
-  if (/unpaid|owe|outstanding|due|pending/.test(t)) {
-    if (!rec) return 'To know what is unpaid I need both a bank statement and an invoice list in the same currency.';
-    let o = rec.outstanding; if (who) o = o.filter(i => i.customer === who); const tot = o.reduce((a, i) => a + i.amount, 0);
-    return `${who ? esc(who) + ' has ' : ''}<b>${M(tot)}</b> unpaid across ${o.length} invoice${o.length === 1 ? '' : 's'}.${rec.questions.length ? ' <i>I still have ' + rec.questions.length + ' question(s) for you, so this may change.</i>' : ''}${o.length ? '<br>' + o.slice(0, 6).map(i => esc(i.id) + ' – ' + esc(i.customer) + ' – ' + M(i.amount)).join('<br>') : ''}${src('invoices that no payment has been matched to')}`;
+  else if (k === 'stat') { const rows = A.bank.filter(l => a.out ? l.debit > 0 : l.credit > 0); h = `<h3>${a.out ? 'Money out' : 'Money in'}</h3><p class="big">${M(rows.reduce((s, l) => s + (a.out ? l.debit : l.credit), 0))}</p><p class="muted small">Across ${rows.length} ${a.out ? 'payments out' : 'payments in'}, from the bank statement.</p>`; }
+  else if (k === 'doc') {
+    const f = c.files.findIndex(x => x.kind === a.which);
+    if (f < 0) h = `<p>I do not have ${a.which === 'bank' ? 'a bank statement' : a.which === 'ledger' ? 'an invoice list' : 'a spreadsheet'} in this chat. Attach one or load a sample.</p>`;
+    else { const file = c.files[f]; h = `<h3>${esc(file.name)}</h3>${a.which === 'bank' ? (bankRows(A, file, f, false).nprob ? `<p class="small muted">Showing the lines with a problem first.</p>` : '') + bankTable(A, file, f, false, 8) : a.which === 'ledger' ? ledgerTable(A, file, false, 8) : sheetTable(A, file, f, 9)}<div class="btns"><button class="btn primary" data-open="${f}">Open the full ${a.which === 'bank' ? 'statement' : a.which === 'ledger' ? 'invoice list' : 'sheet'}</button></div>`; }
   }
-  if (/twice|duplicate|repeat|double/.test(t)) {
-    if (!rec) return 'I need a bank statement and an invoice list to spot repeated payments.';
-    const u = rec.rows.filter(r => r.status === 'DUPLICATE' || (r.status === 'ASK' && /repeat/.test(r.note)));
-    return u.length ? `I found ${u.length}:<br>${u.map(r => D(r.date) + ' – ' + M(r.amount) + ' – ' + esc(r.customer || '')).join('<br>')}${src('payments with the same date, amount and description')}` : 'No payment appears twice.';
+  else if (k === 'emi') { const L = E.loan(Math.round(a.p * 100), Math.round(a.rate * 100), a.months); const cur = a.cur; h = `<h3>Loan instalment</h3><p class="big">${M(L.emi, cur)} a month</p><div class="facts"><div class="fact"><b>${M(Math.round(a.p * 100), cur)}</b><span>Loan</span></div><div class="fact"><b>${a.rate}%</b><span>Yearly interest</span></div><div class="fact"><b>${a.months}</b><span>Months</span></div><div class="fact"><b>${M(L.totInt, cur)}</b><span>Total interest</span></div><div class="fact"><b>${M(L.totPaid, cur)}</b><span>Total paid</span></div></div><div class="note ${L.putBack ? 'good' : 'bad'}">Check: the principal repaid in the schedule ${L.putBack ? 'adds back to exactly the loan amount' : 'does NOT match the loan'}. Interest each month = balance × rate ÷ 12, rounded half up to the paisa.</div><details><summary>Full schedule (${a.months} rows)</summary><div class="tbl" style="max-height:300px;overflow:auto"><table class="doc"><thead><tr><th>#</th><th class="r">Payment</th><th class="r">Interest</th><th class="r">Principal</th><th class="r">Balance</th></tr></thead><tbody>${L.rows.map(x => `<tr><td>${x.m}</td><td class="n r">${plainNum(x.pay, cur)}</td><td class="n r">${plainNum(x.interest, cur)}</td><td class="n r">${plainNum(x.princ, cur)}</td><td class="n r">${plainNum(x.bal, cur)}</td></tr>`).join('')}</tbody></table></div></details>`; }
+  else if (k === 'gst') { const g = E.gst(Math.round(a.amount * 100), a.rate, a.incl, a.igst); h = `<h3>GST at ${a.rate}%</h3><div class="tbl"><table class="doc"><tbody><tr><td>Price before GST</td><td class="n r">${M(g.base, a.cur)}</td></tr>${g.igst ? `<tr><td>IGST ${a.rate}%</td><td class="n r">${M(g.igst, a.cur)}</td></tr>` : `<tr><td>CGST ${a.rate / 2}%</td><td class="n r">${M(g.cgst, a.cur)}</td></tr><tr><td>SGST ${a.rate / 2}%</td><td class="n r">${M(g.sgst, a.cur)}</td></tr>`}<tr><td><b>Total</b></td><td class="n r"><b>${M(g.total, a.cur)}</b></td></tr></tbody></table></div><p class="muted small" style="margin-top:8px">${a.incl ? 'The amount you gave already includes GST, so I worked backwards.' : 'GST added on top of the amount you gave.'} Rounded half up to the paisa.</p>`; }
+  else if (k === 'xirr') { const x = E.xirr(a.fl); h = `<h3>XIRR</h3>${x.error ? `<p>${esc(x.error)}</p>` : `<p class="big">${(x.rate * 100).toFixed(2)}% a year</p><p class="muted small">From ${a.fl.length} cash flows between ${D(Math.min(...a.fl.map(f => f.date)))} and ${D(Math.max(...a.fl.map(f => f.date)))}. Check: the flows discounted at this rate add up to ${x.putBack.toFixed(4)} (should be about 0).</p>`}`; }
+  else if (k === 'currency') h = `<p>Done. Everything now shows in <b>${S.disp === 'USD' ? 'dollars' : 'rupees'}</b> at <b>1 $ = ₹${S.rate}</b>.</p><p class="muted small">The rate is yours to set. Type "set the rate to 83" or use the box at the top. The files themselves do not change.</p>`;
+  else if (k === 'needfile') h = `<p>I need ${a.for === 'foot' ? 'a spreadsheet' : a.for === 'recon' || a.for === 'unpaid' || a.for === 'dups' || a.for === 'decisions' ? 'both a bank statement and an invoice list' : a.for === 'audit' || a.for === 'chart' || a.for === 'stat' ? 'a bank statement' : 'a file'} for that.</p><div class="btns"><button class="btn primary" data-attach="1">Attach a file</button><button class="btn" data-say="Load the sample bank statement and invoices">Try the sample files</button></div>`;
+  else if (k === 'needcalc') h = `<p>I need a bit more for ${esc(a.what)}. Try it like this:</p><div class="btns"><button class="btn" data-say="${esc(a.ex)}">${esc(a.ex)}</button></div>`;
+  else if (k === 'help') h = `<h3>What I can do</h3><p class="small muted">I only do finance work, and I never guess. If I am unsure I ask you.</p><div class="btns" style="flex-direction:column;align-items:flex-start">${['Load the sample bank statement and invoices', 'Match payments to invoices', 'Check the balances', 'What is still unpaid?', 'Any payments made twice?', 'Show money in and out by month', 'Check the totals in my spreadsheet', 'EMI for 12 lakh at 8.5% for 15 years', 'GST 18% on 2500', 'Show amounts in dollars'].map(s => `<button class="btn" data-say="${esc(s)}">${esc(s)}</button>`).join('')}</div><p class="small muted" style="margin-top:12px">Not built yet: tax returns, payroll, DCF models, consolidation.</p>`;
+  else if (k === 'unknown') {
+    const w = (a.text || '').toLowerCase().split(/\W+/).filter(x => x.length > 2); const sg = suggestions().map(s => ({ s, n: w.filter(x => s.toLowerCase().includes(x)).length })).sort((x, y) => y.n - x.n).slice(0, 4).map(x => x.s);
+    h = `<p>I did not understand <b>"${esc(a.text)}"</b>, and I will not guess. Did you mean one of these?</p><div class="btns" style="flex-direction:column;align-items:flex-start">${sg.map(s => `<button class="btn" data-say="${esc(s)}">${esc(s)}</button>`).join('')}</div>`;
   }
-  if (/add up|wrong|error|mistake|balance|total|anything/.test(t)) {
-    const f = findings(A); if (!f.length) return 'I found nothing wrong.';
-    return `I found ${f.length} thing${f.length > 1 ? 's' : ''}:<br>${f.slice(0, 6).map(x => '• ' + x.h).join('<br>')}${f.length > 6 ? '<br>and ' + (f.length - 6) + ' more (see Overview)' : ''}${src('the checks in Overview')}`;
-  }
-  if (/received|money in|collected|income/.test(t)) { const cr = bank.filter(l => l.credit > 0); return `<b>${M(cr.reduce((a, l) => a + l.credit, 0))}</b> came in across ${cr.length} payments.${src('the bank statement')}`; }
-  if (/spent|money out|expens|paid out|cost/.test(t)) { const dr = bank.filter(l => l.debit > 0); return `<b>${M(dr.reduce((a, l) => a + l.debit, 0))}</b> went out across ${dr.length} payments.${src('the bank statement')}`; }
-  if (/how many/.test(t)) return `${bank.length} bank lines and ${items.length} invoices and credit notes.${src('your files')}`;
-  return 'I cannot answer that from your file, and I will not guess. I can tell you what is unpaid, what was paid twice, what does not add up, how much came in or went out, and work out an EMI or GST.';
+  return `<div class="ai"><div class="mark">Z</div><div class="card">${h}</div></div>`;
+}
+function stageHtml(A) {
+  const c = C();
+  if (!c.turns.length) return `<div class="col"><div class="welcome"><div class="brand">Zygon <b>Cognition</b> Finance</div><p>Your finance back office, in plain words. Attach a bank statement, an invoice list or a spreadsheet, then type what you want done. If I am unsure, I ask you. I never guess.</p>
+    <div class="tiles">${[['Try a sample', 'Bank statement and customer invoices', 'Load the sample bank statement and invoices'], ['Check my bank balances', 'Re-add every line of a statement', 'Check the balances'], ['Match payments to invoices', 'Find which invoices each payment paid', 'Match payments to invoices'], ['Find wrong totals', 'Try the sample sales spreadsheet', 'Load the sample sales spreadsheet'], ['Work out a loan', 'EMI for 12 lakh at 8.5% for 15 years', 'EMI for 12 lakh at 8.5% for 15 years'], ['Work out GST', 'GST 18% on 2500', 'GST 18% on 2500']].map(([a, b, s]) => `<button class="tile" data-say="${esc(s)}"><b>${a}</b><span>${b}</span></button>`).join('')}</div></div></div>`;
+  let latest = -1; c.turns.forEach((t, i) => { if (!t.pending && ['summary', 'recon', 'decisions'].includes(t.kind)) latest = i; });
+  return `<div class="col">${c.turns.map((t, i) => (t.q ? `<div class="you">${esc(t.q)}</div>` : '') + turnHtml(t, A, i === latest)).join('')}</div>`;
+}
+
+// ---------- render ----------
+function render() {
+  const c = C(), A = analyze(); window.__A = A;
+  // top bar
+  $('#title').textContent = c.title;
+  document.querySelectorAll('.seg [data-c]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.c === S.disp))); const r = $('#rate'); if (document.activeElement !== r) r.value = S.rate;
+  // sidebar
+  $('#chatlist').innerHTML = S.chats.map(x => `<div class="item${x.id === S.cur ? ' on' : ''}" data-chat="${x.id}" role="button" tabindex="0"><span class="t">${esc(x.title)}</span><button class="x" data-delchat="${x.id}" aria-label="Delete this chat">×</button></div>`).join('');
+  $('#filelist').innerHTML = c.files.length ? c.files.map((f, i) => `<button class="item" data-open="${i}"><span class="fico">${ICON[f.kind]}</span><span class="t">${esc(f.name)}</span></button>`).join('') : '<div class="muted small" style="padding:4px 10px">No files yet</div>';
+  // stage
+  const st = $('#stage'), keep = st.scrollTop; st.innerHTML = stageHtml(A);
+  st.scrollTop = scrollNext ? st.scrollHeight : keep; scrollNext = false;
+  // drawer
+  const dr = $('#drawer'); if (DR && c.files[DR.fi]) { dr.hidden = false; dr.innerHTML = drawerHtml(A); } else { DR = null; dr.hidden = true; dr.innerHTML = ''; }
+  $('#fchips').innerHTML = '';
+  bindAll(A); updateGhost();
+}
+function bindAll(A) {
+  const c = C();
+  document.querySelectorAll('[data-say]').forEach(b => b.onclick = () => submit(b.dataset.say));
+  document.querySelectorAll('[data-open]').forEach(b => b.onclick = () => { DR = { fi: +b.dataset.open, only: false }; $('#app').classList.remove('open'); render(); });
+  document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { const [fi, k] = b.dataset.go.split('|'); focusRow(+fi, k); });
+  document.querySelectorAll('[data-attach]').forEach(b => b.onclick = () => $('#file').click());
+  document.querySelectorAll('[data-chat]').forEach(b => b.onclick = e => { if (e.target.closest('[data-delchat]')) return; S.cur = b.dataset.chat; DR = null; $('#app').classList.remove('open'); scrollNext = true; save(); render(); });
+  document.querySelectorAll('[data-delchat]').forEach(b => b.onclick = e => { e.stopPropagation(); S.chats = S.chats.filter(x => x.id !== b.dataset.delchat); if (S.cur === b.dataset.delchat) S.cur = S.chats[0] ? S.chats[0].id : null; DR = null; save(); render(); });
+  document.querySelectorAll('button[data-oi][data-pay]').forEach(b => b.onclick = () => answerQ(A, b.dataset.pay, +b.dataset.oi));
+  document.querySelectorAll('select[data-pay]').forEach(s => s.onchange = () => { if (s.value !== '') answerQ(A, s.dataset.pay, +s.value); });
+  const dc = $('#dclose'); if (dc) dc.onclick = () => { DR = null; render(); };
+  document.querySelectorAll('select[data-k]').forEach(s => s.onchange = () => { const f = c.files[+s.dataset.k]; if (RAW[f.name]) applyKind(f, RAW[f.name], f.header || 0, s.value); else toast('Sample files cannot change type. Attach your own file to try this.'); c.answers = {}; save(); render(); });
+  document.querySelectorAll('select[data-cur]').forEach(s => s.onchange = () => { c.files[+s.dataset.cur].cur = s.value; save(); render(); });
+  document.querySelectorAll('input[data-only]').forEach(x => x.onchange = () => { DR.only = x.checked; render(); });
+  document.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { c.files.splice(+b.dataset.del, 1); c.answers = {}; DR = null; save(); render(); });
+}
+function answerQ(A, pay, oi) {
+  const c = C(), q = A.recon.questions.find(x => x.pay === pay); if (!q) return; const had = A.recon.questions.length;
+  (c.answers[pay] = c.answers[pay] || {})[q.kind] = q.options[oi].value; save();
+  const after = analyze(); window.__A = after; if (had > 0 && after.recon && !after.recon.questions.length) { const t = addTurn({ q: null, kind: 'summary' }); scrollNext = true; }
+  save(); render();
+}
+function focusRow(fi, key) {
+  DR = { fi, only: false }; render();
+  setTimeout(() => { const el = document.querySelector('#dbody [data-k="' + key + '"]'); if (!el) return; el.scrollIntoView({ block: 'center' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 3500); }, 60);
+}
+function toast(t) { const d = document.createElement('div'); d.className = 'note bad'; d.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));z-index:100;max-width:92%'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 6000); }
+
+// ---------- files in ----------
+async function take(files) {
+  const c = C(); const before = c.files.length; const names = [...files].map(f => f.name);
+  for (const f of files) await readFile(f);
+  c.answers = {}; c.key = null; if (c.title === 'New chat' && names[0]) c.title = names[0];
+  const t = addTurn({ q: 'Attached: ' + names.join(', '), kind: 'files', args: {} });
+  const s = addTurn({ q: null, kind: 'summary', pending: true, steps: STEPS.summary }); scrollNext = true; save(); render();
+  setTimeout(() => { s.pending = false; save(); render(); }, 900);
 }
 
 // ---------- wiring ----------
-function toast(t) { const d = document.createElement('div'); d.className = 'note bad'; d.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:70;max-width:92%'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 6000); }
-async function take(files) { for (const f of files) await readFile(f); S.answers = {}; S.key = null; save(); nav(S.files.length ? 'overview' : 'home'); }
-function focusRow(fi, key) {
-  nav('f' + fi); setTimeout(() => { const el = document.querySelector('[data-k="' + key + '"]'); if (!el) return; el.scrollIntoView({ block: 'center' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 3500); }, 60);
-}
-function bindAll(A, v) {
-  document.querySelectorAll('[data-nav]').forEach(b => b.onclick = () => nav(b.dataset.nav));
-  document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { const [fi, k] = b.dataset.go.split('|'); focusRow(+fi, k); });
-  document.querySelectorAll('[data-sample]').forEach(b => b.onclick = () => loadSample(b.dataset.sample));
-  const d = $('#drop'); if (d) { d.onclick = () => $('#file').click(); d.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#file').click(); } }; }
-  const af = $('#addFile'); if (af) af.onclick = () => $('#file').click();
-  const cl = $('#clear'); if (cl) cl.onclick = resetAll;
-  document.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { S.files.splice(+b.dataset.del, 1); S.answers = {}; S.key = null; save(); nav(S.files.length ? 'overview' : 'home'); });
-  document.querySelectorAll('select[data-k]').forEach(s => s.onchange = () => { const f = S.files[+s.dataset.k]; if (RAW[f.name]) applyKind(f, RAW[f.name], f.header || 0, s.value); else toast('Sample files cannot change type. Upload your own file to try this.'); S.answers = {}; save(); render(); });
-  document.querySelectorAll('select[data-cur]').forEach(s => s.onchange = () => { S.files[+s.dataset.cur].cur = s.value; save(); render(); });
-  document.querySelectorAll('input[data-only]').forEach(c => c.onchange = () => { SHOWONLY[+c.dataset.only] = c.checked; render(); });
-  document.querySelectorAll('button[data-oi]').forEach(b => b.onclick = () => answerQ(A, +b.dataset.qi, +b.dataset.oi));
-  document.querySelectorAll('select[data-qi]').forEach(s => s.onchange = () => { if (s.value !== '') answerQ(A, +s.dataset.qi, +s.value); });
-  const cp = $('#copy'); if (cp) cp.onclick = () => copySummary(A, cp);
-  const af2 = $('#askForm'); if (af2) af2.onsubmit = e => { e.preventDefault(); const t = $('#askIn').value.trim(); if (t) ask(t); };
-  document.querySelectorAll('[data-s]').forEach(b => b.onclick = () => ask(b.dataset.s));
-}
-function answerQ(A, qi, oi) { const q = A.recon.questions[qi], o = q.options[oi]; (S.answers[q.pay] = S.answers[q.pay] || {})[q.kind] = o.value; save(); render(); }
-function copySummary(A, btn) {
-  const sm = summaryLines(A), fi = findings(A).map(x => '- ' + x.t + ': ' + x.h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
-  const text = 'Zygon Cognition Finance summary\n' + sm.head + '\n' + sm.facts.map(([v, l]) => v + ' ' + l).join(', ') + '\n\n' + (fi.join('\n') || 'Nothing wrong found.');
-  const done = () => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy summary', 2000); };
-  try { navigator.clipboard.writeText(text).then(done, () => { btn.textContent = 'Copy not allowed here'; }); } catch (e) { btn.textContent = 'Copy not allowed here'; }
-}
-function resetAll() { S = Object.assign(S, { files: [], answers: {}, chat: [], key: null }); try { localStorage.removeItem(KEY); } catch (e) { } nav('home'); }
-$('#back').onclick = () => nav('home');
-$('#file').onchange = e => { take(e.target.files); e.target.value = ''; };
-// Drag and drop. The overlay only appears for real files, never blocks clicks, and always goes away.
-let ovTimer = null;
-const hideOv = () => { $('#dropov').hidden = true; clearTimeout(ovTimer); };
-const hasFiles = e => e.dataTransfer && [...e.dataTransfer.types].includes('Files');
-window.addEventListener('dragover', e => { e.preventDefault(); if (hasFiles(e)) { $('#dropov').hidden = false; clearTimeout(ovTimer); ovTimer = setTimeout(hideOv, 400); } });
-window.addEventListener('dragend', hideOv); window.addEventListener('blur', hideOv);
-window.addEventListener('keydown', e => { if (e.key === 'Escape') hideOv(); });
-window.addEventListener('drop', e => {
-  e.preventDefault(); hideOv();
-  const s = e.dataTransfer.getData('text/x-zygon-sample');
-  if (s) { loadSample(s); return; }
-  if (e.dataTransfer.files.length) take(e.dataTransfer.files);
+$('#send').onclick = () => submit($('#q').value);
+$('#q').addEventListener('input', () => updateGhost());
+$('#q').addEventListener('keydown', e => {
+  if (e.key === 'Tab') { const s = currentSuggestion(); if (s && s !== $('#q').value) { e.preventDefault(); $('#q').value = s; updateGhost(); } }
+  else if (e.key === 'Enter') { e.preventDefault(); const v = $('#q').value.trim(); if (v) submit(v); }
+  else if (e.key === 'Escape') { $('#pop').hidden = true; }
 });
-// samples can be dragged into the drop box too
-document.addEventListener('dragstart', e => { const b = e.target.closest && e.target.closest('[data-sample]'); if (b) { e.dataTransfer.setData('text/x-zygon-sample', b.dataset.sample); e.dataTransfer.effectAllowed = 'copy'; } });
-document.addEventListener('dragover', e => { const z = e.target.closest && e.target.closest('#drop'); if (z) z.classList.add('over'); });
-document.addEventListener('dragleave', e => { const z = e.target.closest && e.target.closest('#drop'); if (z && !z.contains(e.relatedTarget)) z.classList.remove('over'); });
-load(); render();
+setInterval(() => { if (!$('#q').value) { sugIdx++; updateGhost(); } }, 4500);
+$('#attach').onclick = () => $('#file').click();
+$('#file').onchange = e => { take(e.target.files); e.target.value = ''; };
+$('#newchat').onclick = () => { newChat(); DR = null; $('#app').classList.remove('open'); save(); render(); $('#q').focus(); };
+$('#menu').onclick = () => { const a = $('#app'); if (window.innerWidth <= 900) a.classList.toggle('open'); else a.classList.toggle('collapsed'); };
+$('#scrim').onclick = () => $('#app').classList.remove('open');
+document.querySelectorAll('.seg [data-c]').forEach(b => b.onclick = () => { S.disp = b.dataset.c; save(); render(); });
+$('#rate').onchange = e => { const v = parseFloat(e.target.value); if (v > 0) { S.rate = v; save(); render(); } else e.target.value = S.rate; };
+$('#theme').onclick = () => { const dark = (document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark'; S.theme = dark ? 'light' : 'dark'; document.documentElement.dataset.theme = S.theme; save(); };
+// drag and drop: the overlay only shows for real files and never blocks clicks
+let ovTimer = null; const hideOv = () => { $('#dropov').hidden = true; clearTimeout(ovTimer); }; const hasFiles = e => e.dataTransfer && [...e.dataTransfer.types].includes('Files');
+window.addEventListener('dragover', e => { e.preventDefault(); if (hasFiles(e)) { $('#dropov').hidden = false; clearTimeout(ovTimer); ovTimer = setTimeout(hideOv, 400); } });
+window.addEventListener('dragend', hideOv); window.addEventListener('blur', hideOv); window.addEventListener('keydown', e => { if (e.key === 'Escape') hideOv(); });
+window.addEventListener('drop', e => { e.preventDefault(); hideOv(); if (e.dataTransfer.files.length) take(e.dataTransfer.files); });
+load(); if (!S.chats.length) newChat(); if (window.innerWidth <= 900) $('#app').classList.remove('collapsed'); render(); if (window.innerWidth > 900) $('#q').focus();
 </script>
